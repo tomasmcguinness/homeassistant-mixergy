@@ -42,11 +42,14 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
 
     tank = Tank(hass, data["username"],data["password"],data["serial_number"])
 
+    result = await tank.test_authentication()
+
+    if not result:
+        raise InvalidPassword
+
     result = await tank.test_connection()
 
     if not result:
-        # If there is an error, raise an exception to notify HA that there was a
-        # problem. The UI will also show there was a problem
         raise CannotConnect
 
     # Return info that you want to store in the config entry.

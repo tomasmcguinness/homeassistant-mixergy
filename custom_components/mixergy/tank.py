@@ -1,11 +1,15 @@
 import logging
 import asyncio
-import random
+import json
 from homeassistant.helpers import aiohttp_client
 
 _LOGGER = logging.getLogger(__name__)
 
 ROOT_ENDPOINT = "https://www.mixergy.io/api/v2"
+
+class TankUrls:
+    def __init__(self, account_url):
+        self.account_url = account_url
 
 class Tank:
 
@@ -15,96 +19,105 @@ class Tank:
         self._id = serial_number.lower()
         self.username = username
         self.password = password
-        self.serial_number = serial_number
+        self.serial_number = serial_number.upper()
         self._hass = hass
         self._callbacks = set()
         self._loop = asyncio.get_event_loop()
         self._hot_water_temperature = 0
         self._coldest_water_temperature = 0
-        self.model = "Mixergy 123"
-        self.firmware_version = "0.0.{}".format(random.randint(1, 9))
+        self._eletric_heat = False
+        self._indriect_heat = False
+        self._hasFetched = False
+        self.model = ""
+        self.firmware_version = "0.0.0"
 
     @property
     def tank_id(self):
         return self._id
 
-    def set_token(self, token):
-        self.__token = token
-
-    def set_tank_url(self, tank_url):
-        self.__tank_url = tank_url
-
-    def set_bottom_temperature(self, bottom_temperature):
-        self.__bottom_temperature = bottom_temperature
-
-    def set_top_temperature(self, top_temperature):
-        self.__top_temperature = top_temperature
-
-    def set_charge(self, charge):
-        self.__charge = charge
+    async def test_authentication(self):
+        return await self.authenticate()
 
     async def test_connection(self):
-        return True
-
-    async def fetchUrls(self):
-        _LOGGER.info("Fetching the API endpoints...")
-        async with session.post("https://www.mixergy.io/api/v2") as resp:
-            login_result = await resp.json()
-            _LOGGER.info(login_result)
-            token = login_result['token']
-            self.set_token(token)
+        return await self.fetch_tank_information()
 
     async def authenticate(self):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
-        async with session.post("https://www.mixergy.io/api/v2/account/login", json={'username':self.username, 'password':self.password}) as resp:
+        async with session.get(ROOT_ENDPOINT) as resp:
+            root_result = await resp.json()
+
+            self._account_url = root_result["_links"]["account"]["href"]
+
+            async with session.get(self._account_url) as resp:
+                account_result = await resp.json()
+
+                login_url = account_result["_links"]["login"]["href"]
+
+                self._login_url = login_url
+
+        async with session.post(self._login_url, json={'username': self.username, 'password': self.password}) as resp:
+
+            if resp.status != 200:
+                return False
+
             login_result = await resp.json()
-            _LOGGER.info(login_result)
             token = login_result['token']
-            self.set_token(token)
+            self._token = token
+            return True
 
     async def fetch_tank_information(self):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
-        headers = {'Authorization': f'Bearer {self.__token}'}
+        headers = {'Authorization': f'Bearer {self._token}'}
 
-        _LOGGER.info(headers)
+        async with session.get(ROOT_ENDPOINT, headers=headers) as resp:
+            root_result = await resp.json()
 
-        async with session.get("https://www.mixergy.io/api/v2/tanks", headers=headers) as resp:
-            _LOGGER.info(resp.status)
+            self._tanks_url = root_result["_links"]["tanks"]["href"]
+
+        async with session.get(self._tanks_url, headers=headers) as resp:
             tank_result = await resp.json()
-            _LOGGER.info(tank_result)
 
-            # Grab the first tank for now. We will update this to match by the specified serial number in the future!!
             tanks = tank_result['_embedded']['tankList']
-            tank = tanks[0]
+
+            _LOGGER.debug(tanks)
+
+            for i, subjobj in enumerate(tanks):
+                if self.serial_number == subjobj['serialNumber']:
+                    _LOGGER.info("Found matching tank")
+                    tank = i
+
+            if not tank:
+                return False
+
             tank_url = tank["_links"]["self"]["href"]
-            self.set_tank_url(tank_url)
             self.firmwareVersion = tank["firmwareVersion"]
             self.modelCode = tank["tankModelCode"]
+
+            async with session.get(tank_url) as resp:
+                tank_url_result = await resp.json()
+                self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]
+                return True
 
     async def fetch_last_measurement(self):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
-        headers = {'Authorization': f'Bearer {self.__token}'}
+        headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.get(self.__tank_url,headers=headers) as resp:
-            _LOGGER.info(resp.status)
+        async with session.get(self._last_measurement_url, headers=headers) as resp:
             tank_result = await resp.json()
-            _LOGGER.info(tank_result)
-            last_measurement_url = tank_result["_links"]["latest_measurement"]["href"]
-
-            async with session.get(last_measurement_url,headers=headers) as resp:
-                tank_result = await resp.json()
-                _LOGGER.info(tank_result)
-                self.set_top_temperature(tank_result["topTemperature"])
-                self.set_bottom_temperature(tank_result["bottomTemperature"])
-                self.set_charge(tank_result["charge"])
+            _LOGGER.debug(tank_result)
+            self._hot_water_temperature = tank_result["topTemperature"]
+            self._coldest_water_temperature = tank_result["bottomTemperature"]
+            self._charge = tank_result["charge"]
 
     async def fetch_data(self):
+
+        _LOGGER.info('Fetching data....')
 
         await self.authenticate()
 
@@ -114,16 +127,12 @@ class Tank:
 
         await self.publish_updates()
 
-        return { "hot_water_temperature": 40 }
-
     def register_callback(self, callback):
         self._callbacks.add(callback)
 
     def remove_callback(self, callback):
         self._callbacks.discard(callback)
 
-    # In a real implementation, this library would call it's call backs when it was
-    # notified of any state changeds for the relevant device.
     async def publish_updates(self):
         for callback in self._callbacks:
             callback()
@@ -134,12 +143,12 @@ class Tank:
 
     @property
     def hot_water_temperature(self):
-        return self.__top_temperature
+        return self._hot_water_temperature
 
     @property
     def coldest_water_temperature(self):
-        return self.__bottom_temperature
+        return self._coldest_water_temperature
 
     @property
     def charge(self):
-        return self.__charge
+        return self._charge
