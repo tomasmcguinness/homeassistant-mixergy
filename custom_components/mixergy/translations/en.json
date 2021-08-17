@@ -11,9 +11,9 @@
         "step": {
             "user": {
                 "data": {
-                    "serial_number": "[%key:common::config_flow::data::serial_number%]",
-                    "password": "[%key:common::config_flow::data::password%]",
-                    "username": "[%key:common::config_flow::data::username%]"
+                    "serial_number": "Serial Number",
+                    "password": "Password",
+                    "username": "Username"
                 }
             }
         }
