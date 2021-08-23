@@ -7,7 +7,7 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 At present, this integratino can only be installed manually.
 
-Just copy the mixergy colder into your installation's custom_components folder and restart HomeAssistant. The integration will then be available to install via the Integration page of settings
+Just copy the mixergy folder into your installation's custom_components folder and restart HomeAssistant. The integration will then be available to install via the Integration page of settings
 
 ![image](https://user-images.githubusercontent.com/302741/130430354-cbe935cc-fa55-4cec-bcb2-333409e7ebdd.png)
 
@@ -24,5 +24,7 @@ This integration is useful as it provides the state of your Mixergy tank via the
 * Put better icons into the status
 * Ensure authentication token expiry is handled correctly.
 * Create a nice Lovelace card that provides a visual representation of the tank's state.
+* Maybe get this component merged into the HomeAssistant core
+* Get the Mixergy icon added, to improve the installation
 
 
