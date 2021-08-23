@@ -177,7 +177,7 @@ class IndirectHeatSensor(BinarySensorBase):
 
     @property
     def is_on(self):
-        return False
+        return self._tank.indirect_heat_source
 
     @property
     def name(self):
@@ -197,7 +197,7 @@ class ElectricHeatSensor(BinarySensorBase):
 
     @property
     def is_on(self):
-        return True
+        return self._tank.electic_heat_source
 
     @property
     def name(self):

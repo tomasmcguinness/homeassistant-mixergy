@@ -28,6 +28,8 @@ class Tank:
         self._eletric_heat = False
         self._indriect_heat = False
         self._hasFetched = False
+        self._token = ""
+        self._latest_measurement_url = ""
         self.model = ""
         self.firmware_version = "0.0.0"
 
@@ -42,6 +44,10 @@ class Tank:
         return await self.fetch_tank_information()
 
     async def authenticate(self):
+
+        if self._token:
+            _LOGGER.info("Authentication token is valid")
+            return
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
@@ -81,6 +87,10 @@ class Tank:
             return True
 
     async def fetch_tank_information(self):
+
+        if self._latest_measurement_url:
+            _LOGGER.info("Thank information already fetched")
+            return
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
@@ -154,9 +164,25 @@ class Tank:
 
             tank_result = await resp.json()
             _LOGGER.debug(tank_result)
+
             self._hot_water_temperature = tank_result["topTemperature"]
             self._coldest_water_temperature = tank_result["bottomTemperature"]
             self._charge = tank_result["charge"]
+
+            state = json.loads(tank_result["state"])
+
+            current = state["current"]
+
+            heat_source = current["heat_source"]
+            heat_source_on = current["immersion"] == "On"
+
+            if heat_source == "Indirect":
+                self._electric_heat_source = False
+                self._indirect_heat_source = heat_source_on
+
+            elif heat_source == "Electric":
+                self._electric_heat_source = heat_source_on
+                self._indirect_heat_source = False
 
     async def fetch_data(self):
 
@@ -195,3 +221,11 @@ class Tank:
     @property
     def charge(self):
         return self._charge
+
+    @property
+    def indirect_heat_source(self):
+        return self._indirect_heat_source
+
+    @property
+    def electic_heat_source(self):
+        return self._electric_heat_source
