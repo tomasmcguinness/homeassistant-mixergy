@@ -1,4 +1,3 @@
-"""Config flow for Hello World integration."""
 import logging
 
 import voluptuous as vol
@@ -45,12 +44,12 @@ async def validate_input(hass: core.HomeAssistant, data: dict):
     result = await tank.test_authentication()
 
     if not result:
-        raise InvalidPassword
+        raise AuthenticationFailed
 
     result = await tank.test_connection()
 
     if not result:
-        raise CannotConnect
+        raise TankNotFound
 
     # Return info that you want to store in the config entry.
     # "Title" is what is displayed to the user for this hub device
@@ -81,10 +80,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 info = await validate_input(self.hass, user_input)
-
                 return self.async_create_entry(title=info["title"], data=user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
+            except AuthenticationFailed:
+                errors["base"] = "invalid_auth"
+            except TankNotFound:
+                errors["base"] = "tank_not_found"
             except InvalidUserName:
                 # The error string is set here, and should be translated.
                 # This example does not currently cover translations, see the
@@ -112,9 +114,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
 
-
 class CannotConnect(exceptions.HomeAssistantError):
-    """Error to indicate we cannot connect."""
+    """Error to indicate we could not reach the Mixergy API."""
+
+class AuthenticationFailed(exceptions.HomeAssistantError):
+    """Error to indicate we cannot authenciate."""
+
+class TankNotFound(exceptions.HomeAssistantError):
+    """Error to indicate we could not find a tank with the serial number."""
 
 class InvalidUserName(exceptions.HomeAssistantError):
     """Error to indicate there is an invalid hostname."""

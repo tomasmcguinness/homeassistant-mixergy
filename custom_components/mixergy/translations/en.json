@@ -1,12 +1,11 @@
 {
     "config": {
-        "abort": {
-            "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
-        },
         "error": {
-            "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
-            "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
-            "unknown": "[%key:common::config_flow::error::unknown%]"
+            "invalidat_username": "Failed to connect to Mixergy API",
+            "cannot_connect": "Failed to connect to Mixergy API",
+            "tank_not_found": "Could not find a tank with the specified serial number",
+            "invalid_auth": "Authentication failed.",
+            "unknown": "Something went wrong. Please try again."
         },
         "step": {
             "user": {
