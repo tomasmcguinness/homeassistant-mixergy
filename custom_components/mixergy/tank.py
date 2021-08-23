@@ -46,20 +46,33 @@ class Tank:
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         async with session.get(ROOT_ENDPOINT) as resp:
+
+            if resp.status != 200:
+                _LOGGER.info("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
+                return False
+
             root_result = await resp.json()
 
             self._account_url = root_result["_links"]["account"]["href"]
 
+            _LOGGER.info("Account URL: %s", self._account_url)
+
             async with session.get(self._account_url) as resp:
+
+                if resp.status != 200:
+                    _LOGGER.info("Fetch of account at %s failed with status code %i", self._account_url, resp.status)
+                    return False
+
                 account_result = await resp.json()
 
-                login_url = account_result["_links"]["login"]["href"]
+                self._login_url = account_result["_links"]["login"]["href"]
 
-                self._login_url = login_url
+                _LOGGER.info("Login URL: %s", self._login_url)
 
         async with session.post(self._login_url, json={'username': self.username, 'password': self.password}) as resp:
 
-            if resp.status != 200:
+            if resp.status != 201:
+                _LOGGER.info("Authentication failed with status code %i", resp.status)
                 return False
 
             login_result = await resp.json()
@@ -74,32 +87,57 @@ class Tank:
         headers = {'Authorization': f'Bearer {self._token}'}
 
         async with session.get(ROOT_ENDPOINT, headers=headers) as resp:
+
+            if resp.status != 200:
+                _LOGGER.info("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
+                return False
+
             root_result = await resp.json()
 
             self._tanks_url = root_result["_links"]["tanks"]["href"]
 
         async with session.get(self._tanks_url, headers=headers) as resp:
+
+            if resp.status != 200:
+                _LOGGER.info("Fetch of tanks at %s failed with status code %i", self._tanks_url, resp.status)
+                return False
+
             tank_result = await resp.json()
 
             tanks = tank_result['_embedded']['tankList']
 
             _LOGGER.debug(tanks)
 
+            tank = None
+
             for i, subjobj in enumerate(tanks):
                 if self.serial_number == subjobj['serialNumber']:
-                    _LOGGER.info("Found matching tank")
-                    tank = i
+                    _LOGGER.info("Found matching tank!")
+                    tank = subjobj
+                    break
 
             if not tank:
+                _LOGGER.info("Could not find a tank with the serial number %s", self.serial_number)
                 return False
 
             tank_url = tank["_links"]["self"]["href"]
             self.firmwareVersion = tank["firmwareVersion"]
             self.modelCode = tank["tankModelCode"]
 
-            async with session.get(tank_url) as resp:
+            async with session.get(tank_url, headers=headers) as resp:
+
+                if resp.status != 200:
+                    _LOGGER.info("Fetch of the tanks details at %s failed with status %i", tank_url, resp.status)
+                    return False
+
                 tank_url_result = await resp.json()
-                self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]
+
+                _LOGGER.debug(tank_url_result)
+
+                self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]["href"]
+
+                _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
+
                 return True
 
     async def fetch_last_measurement(self):
@@ -108,7 +146,12 @@ class Tank:
 
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.get(self._last_measurement_url, headers=headers) as resp:
+        async with session.get(self._latest_measurement_url, headers=headers) as resp:
+
+            if resp.status != 200:
+                _LOGGER.info("Fetch of the latest measurement at %s failed with status %i", self._latest_measurement_url, resp.status)
+                return
+
             tank_result = await resp.json()
             _LOGGER.debug(tank_result)
             self._hot_water_temperature = tank_result["topTemperature"]
