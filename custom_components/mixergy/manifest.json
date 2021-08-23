@@ -3,7 +3,7 @@
     "name": "Mixergy",
     "version": "0.0.1",
     "config_flow": true,
-    "documentation": "https://www.example.com",
+    "documentation": "https://github.com/tomasmcguinness/homeassistant-mixergy",
     "dependencies": [],
     "codeowners": [],
     "requirements": [],
