@@ -103,7 +103,7 @@ class ChargeSensor(SensorBase):
 
     @property
     def unique_id(self):
-        return f"mixergy_{self._tank.tank_id}_charge"
+        return f"mixergy_{self._tank.serial_number}_charge"
 
     @property
     def unit_of_measurement(self):
@@ -126,7 +126,7 @@ class HotWaterTemperatureSensor(SensorBase):
 
     @property
     def unique_id(self):
-        return f"mixergy_{self._tank.tank_id}_hot_water_temperature"
+        return f"mixergy_{self._tank.serial_number}_hot_water_temperature"
 
     @property
     def state(self):
@@ -150,7 +150,7 @@ class ColdestWaterTemperatureSensor(SensorBase):
 
     @property
     def unique_id(self):
-        return f"mixergy_{self._tank.tank_id}_coldest_water_temperature"
+        return f"mixergy_{self._tank.serial_number}_coldest_water_temperature"
 
     @property
     def state(self):
@@ -173,11 +173,15 @@ class IndirectHeatSensor(BinarySensorBase):
 
     @property
     def unique_id(self):
-        return f"mixergy_{self._tank.tank_id}_indirect_heat"
+        return f"mixergy_{self._tank.serial_number}_indirect_heat"
 
     @property
     def is_on(self):
         return self._tank.indirect_heat_source
+
+    @property
+    def icon(self):
+        return "mdi:fire"
 
     @property
     def name(self):
