@@ -5,7 +5,7 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 ## Installation
 
-At present, this integratino can only be installed manually.
+At present, this integration can only be installed manually.
 
 Just copy the mixergy folder into your installation's custom_components folder and restart HomeAssistant. The integration will then be available to install via the Integration page of settings
 
