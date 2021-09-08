@@ -23,8 +23,9 @@ class Tank:
         self._hass = hass
         self._callbacks = set()
         self._loop = asyncio.get_event_loop()
-        self._hot_water_temperature = 0
-        self._coldest_water_temperature = 0
+        self._hot_water_temperature = -1
+        self._coldest_water_temperature = -1
+        self._charge = -1
         self._eletric_heat = False
         self._indriect_heat = False
         self._hasFetched = False
@@ -54,7 +55,7 @@ class Tank:
         async with session.get(ROOT_ENDPOINT) as resp:
 
             if resp.status != 200:
-                _LOGGER.info("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
+                _LOGGER.error("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
                 return False
 
             root_result = await resp.json()
@@ -66,7 +67,7 @@ class Tank:
             async with session.get(self._account_url) as resp:
 
                 if resp.status != 200:
-                    _LOGGER.info("Fetch of account at %s failed with status code %i", self._account_url, resp.status)
+                    _LOGGER.error("Fetch of account at %s failed with status code %i", self._account_url, resp.status)
                     return False
 
                 account_result = await resp.json()
@@ -78,7 +79,7 @@ class Tank:
         async with session.post(self._login_url, json={'username': self.username, 'password': self.password}) as resp:
 
             if resp.status != 201:
-                _LOGGER.info("Authentication failed with status code %i", resp.status)
+                _LOGGER.error("Authentication failed with status code %i", resp.status)
                 return False
 
             login_result = await resp.json()
@@ -89,7 +90,7 @@ class Tank:
     async def fetch_tank_information(self):
 
         if self._latest_measurement_url:
-            _LOGGER.info("Thank information already fetched")
+            _LOGGER.info("Tank information has already been fetched")
             return
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
@@ -99,7 +100,7 @@ class Tank:
         async with session.get(ROOT_ENDPOINT, headers=headers) as resp:
 
             if resp.status != 200:
-                _LOGGER.info("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
+                _LOGGER.error("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
                 return False
 
             root_result = await resp.json()
@@ -109,7 +110,7 @@ class Tank:
         async with session.get(self._tanks_url, headers=headers) as resp:
 
             if resp.status != 200:
-                _LOGGER.info("Fetch of tanks at %s failed with status code %i", self._tanks_url, resp.status)
+                _LOGGER.error("Fetch of tanks at %s failed with status code %i", self._tanks_url, resp.status)
                 return False
 
             tank_result = await resp.json()
@@ -122,12 +123,12 @@ class Tank:
 
             for i, subjobj in enumerate(tanks):
                 if self.serial_number == subjobj['serialNumber']:
-                    _LOGGER.info("Found matching tank!")
+                    _LOGGER.info("Found a tank with matching serial number %s!", self.serial_number)
                     tank = subjobj
                     break
 
             if not tank:
-                _LOGGER.info("Could not find a tank with the serial number %s", self.serial_number)
+                _LOGGER.error("Could not find a tank with the serial number %s", self.serial_number)
                 return False
 
             tank_url = tank["_links"]["self"]["href"]
@@ -137,7 +138,7 @@ class Tank:
             async with session.get(tank_url, headers=headers) as resp:
 
                 if resp.status != 200:
-                    _LOGGER.info("Fetch of the tanks details at %s failed with status %i", tank_url, resp.status)
+                    _LOGGER.error("Fetch of the tanks details at %s failed with status %i", tank_url, resp.status)
                     return False
 
                 tank_url_result = await resp.json()
@@ -167,7 +168,26 @@ class Tank:
 
             self._hot_water_temperature = tank_result["topTemperature"]
             self._coldest_water_temperature = tank_result["bottomTemperature"]
-            self._charge = tank_result["charge"]
+
+            new_charge = tank_result["charge"]
+
+            _LOGGER.debug("Current: %f", self._charge)
+            _LOGGER.debug("New: %f", new_charge)
+
+            if new_charge != self._charge:
+                _LOGGER.debug('Sending charge_changed event')
+
+                event_data = {
+                    "device_id": self._id,
+                    "type": "charge_changed",
+                    "charge" : new_charge
+                }
+
+                self._hass.bus.async_fire("mixergy_event", event_data)
+
+            self._charge = new_charge
+
+            # Fetch information about the state of the heating.
 
             state = json.loads(tank_result["state"])
 
