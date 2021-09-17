@@ -146,8 +146,10 @@ class Tank:
                 _LOGGER.debug(tank_url_result)
 
                 self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]["href"]
+                self._control_url = tank_url_result["_links"]["control"]["href"]
 
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
+                _LOGGER.debug("Control URL is %s", self._control_url)
 
                 return True
 
