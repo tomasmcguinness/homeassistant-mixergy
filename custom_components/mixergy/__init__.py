@@ -11,7 +11,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass, config):
     _LOGGER.info("Setting up mixergy tank...")
+
     hass.data[DOMAIN] = {}
+
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
@@ -33,6 +35,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
             ]
         )
     )
+
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
 
