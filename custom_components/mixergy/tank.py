@@ -2,6 +2,7 @@ import logging
 import asyncio
 import json
 from homeassistant.helpers import aiohttp_client
+from .const import ATTR_PERCENTAGE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,6 +44,10 @@ class Tank:
 
     async def test_connection(self):
         return await self.fetch_tank_information()
+
+    async def set_target_charge(self, data):
+        percentage = data[ATTR_PERCENTAGE]
+        _LOGGER.debug("here!")
 
     async def authenticate(self):
 
