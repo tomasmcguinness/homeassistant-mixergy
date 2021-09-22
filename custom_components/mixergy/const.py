@@ -1,3 +1,6 @@
-# This is the internal name of the integration, it should also match the directory
-# name for the integration.
+# Consts for the Mixergy integration
 DOMAIN = "mixergy"
+
+SERVICE_SET_CHARGE = "mixergy_set_charge"
+
+ATTR_PERCENTAGE = "percentage"
