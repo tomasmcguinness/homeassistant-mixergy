@@ -36,8 +36,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(ChargeSensor(coordinator, tank))
     new_entities.append(ElectricHeatSensor(coordinator, tank))
     new_entities.append(IndirectHeatSensor(coordinator, tank))
-    new_entities.append(LowHotWaterSensor(coordinator, tank))
-    new_entities.append(NoHotWaterSensor(coordinator, tank))
+    new_entities.append(LowChargeSensor(coordinator, tank))
+    new_entities.append(NoChargeSensor(coordinator, tank))
 
     async_add_entities(new_entities)
 
@@ -214,7 +214,7 @@ class ElectricHeatSensor(BinarySensorBase):
     def name(self):
         return f"Electric Heat"
 
-class NoHotWaterSensor(BinarySensorBase):
+class NoChargeSensor(BinarySensorBase):
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
@@ -236,7 +236,7 @@ class NoHotWaterSensor(BinarySensorBase):
     def name(self):
         return f"No Hot Water"
 
-class LowHotWaterSensor(BinarySensorBase):
+class LowChargeSensor(BinarySensorBase):
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
