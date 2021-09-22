@@ -3,4 +3,4 @@ DOMAIN = "mixergy"
 
 SERVICE_SET_CHARGE = "mixergy_set_charge"
 
-ATTR_PERCENTAGE = "percentage"
+ATTR_CHARGE = "charge"

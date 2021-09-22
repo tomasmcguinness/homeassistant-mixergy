@@ -1,4 +1,4 @@
-from .const import ATTR_PERCENTAGE, SERVICE_SET_CHARGE
+from .const import ATTR_CHARGE, SERVICE_SET_CHARGE
 import logging
 import asyncio
 import voluptuous as vol
@@ -67,14 +67,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 def _register_services(hass):
     """Register Mixergy services."""
 
-    async def mixergy_set_charge(call, skip_reload=True):
+    async def mixergy_set_charge(call):
 
         tasks = [
             tank.set_target_charge(call.data)
             for tank in hass.data[DOMAIN].values()
             if isinstance(tank, Tank)
         ]
+
         results = await asyncio.gather(*tasks)
+
+        # Note that we'll get a "None" value for a successful call
+        if None not in results:
+            _LOGGER.warning("The request to charge the tank did not succeed")
 
     if not hass.services.has_service(DOMAIN, SERVICE_SET_CHARGE):
         # Register a local handler for scene activation
@@ -84,7 +89,7 @@ def _register_services(hass):
             verify_domain_control(hass, DOMAIN)(mixergy_set_charge),
             schema=vol.Schema(
                 {
-                    vol.Required(ATTR_PERCENTAGE): cv.positive_int
+                    vol.Required(ATTR_CHARGE): cv.positive_int
                 }
             ),
         )

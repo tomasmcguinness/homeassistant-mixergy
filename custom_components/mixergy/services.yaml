@@ -1,0 +1,14 @@
+# Describes the format for available Mixergy services
+mixergy_set_charge:
+  name: Set Charge
+  description: Sets the desired charge of your Mixergy tank.
+  fields:
+    charge:
+      name: Charge
+      description: The charge you want the tank to reach.
+      example: 25
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
