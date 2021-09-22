@@ -47,7 +47,18 @@ class Tank:
 
     async def set_target_charge(self, data):
         percentage = data[ATTR_PERCENTAGE]
-        _LOGGER.debug("here!")
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._control_url, headers=headers, json={'charge': percentage }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set the desired charge failed with status %i", self._control_url, resp.status)
+                return
+
+            self.fetch_tank_information()
 
     async def authenticate(self):
 
