@@ -36,15 +36,15 @@ This integration adds a new service - mixergy.mixergy_set_charge. It allows you 
 
 This integration is useful as it provides the state of your Mixergy tank via the API, but there are numerous enhancements I would like to make.
 
-* ~~Add the component to HACS
-* Add to the HACS default repository list (this is pending)
-* ~~Add a service to enable the charge to be set, so you can boost via HA
-* ~~Put better icons into the status
+* ~~Add the component to HACS~~
+* Add to the HACS default repository list (There is a PR open for this)
+* ~~Add a service to enable the charge to be set, so you can boost via HA~~
+* ~~Put better icons into the status~~
 * Ensure authentication token expiry is handled correctly. (Been told the token doesn't expire at present)
 * Create a nice Lovelace card that provides a visual representation of the tank's state.
 * Get this component merged into the HomeAssistant core?
-* ~~Get the new Mixergy icon added and support dark mode
-* ~~Get the Mixergy icon added, to improve the installation
+* Update the Mixergy icon and support dark mode
+* ~~Get the Mixergy icon added, to improve the installation~~
 * Support *away* by controlling tank's holiday mode
 
 
