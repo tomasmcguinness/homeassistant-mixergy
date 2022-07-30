@@ -5,7 +5,7 @@
     "config_flow": true,
     "documentation": "https://github.com/tomasmcguinness/homeassistant-mixergy",
     "issue_tracker": "https://github.com/tomasmcguinness/homeassistant-mixergy/issues",
-    "dependencies": [],
+    "dependencies": ["integration"],
     "codeowners": ["@tomasmcguinness"],
     "requirements": [],
     "iot_class": "cloud_polling"
