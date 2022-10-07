@@ -18,11 +18,11 @@ Alternatively, you can copy the contents of the mixergy folder into your custom_
 
 ## Setup
 
-Once installed, the integration will then be available as an integration you can install
+Once installed, the integration will then be available as an integration you can install.
 
 ![image](https://user-images.githubusercontent.com/302741/130430354-cbe935cc-fa55-4cec-bcb2-333409e7ebdd.png)
 
-You then need to provide your Mixergy credentials and the serial number of your tank. 
+You then need to provide your Mixergy credentials and the serial number of your tank. You can find the serial number physically on the tank, or via [mixergy.io](https://www.mixergy.io/).
 
 ![image](https://user-images.githubusercontent.com/302741/130430401-7499d0f8-872c-4062-a743-49d5fd686fcd.png)
 
