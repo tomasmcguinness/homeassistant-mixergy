@@ -2,6 +2,7 @@ import logging
 import asyncio
 import json
 from homeassistant.helpers import aiohttp_client
+from .const import ATTR_CHARGE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,6 +44,21 @@ class Tank:
 
     async def test_connection(self):
         return await self.fetch_tank_information()
+
+    async def set_target_charge(self, data):
+        charge = data[ATTR_CHARGE]
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._control_url, headers=headers, json={'charge': charge }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set the desired charge failed with status %i", self._control_url, resp.status)
+                return
+
+            self.fetch_tank_information()
 
     async def authenticate(self):
 
@@ -133,8 +149,7 @@ class Tank:
 
             tank_url = tank["_links"]["self"]["href"]
             self.firmwareVersion = tank["firmwareVersion"]
-            self.modelCode = tank["tankModelCode"]
-
+            
             async with session.get(tank_url, headers=headers) as resp:
 
                 if resp.status != 200:
@@ -146,8 +161,11 @@ class Tank:
                 _LOGGER.debug(tank_url_result)
 
                 self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]["href"]
+                self._control_url = tank_url_result["_links"]["control"]["href"]
+                self.modelCode = tank_url_result["tankModelCode"]
 
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
+                _LOGGER.debug("Control URL is %s", self._control_url)
 
                 return True
 

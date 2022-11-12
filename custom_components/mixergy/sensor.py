@@ -1,8 +1,9 @@
 import logging
 from datetime import timedelta
-from homeassistant.const import DEVICE_CLASS_ENERGY, PERCENTAGE, TEMP_CELSIUS, STATE_ON, STATE_OFF
+from homeassistant.const import DEVICE_CLASS_ENERGY, DEVICE_CLASS_POWER, PERCENTAGE, TEMP_CELSIUS, STATE_OFF, POWER_WATT
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.binary_sensor import BinarySensorEntity, DEVICE_CLASS_GAS, DEVICE_CLASS_HEAT
+from homeassistant.components.integration.sensor import IntegrationSensor
+from homeassistant.components.binary_sensor import BinarySensorEntity, DEVICE_CLASS_HEAT
 from homeassistant.components.sensor import DEVICE_CLASS_TEMPERATURE
 from .const import DOMAIN
 from .tank import Tank
@@ -29,12 +30,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     new_entities = []
 
-    # Add three sensors.
     new_entities.append(HotWaterTemperatureSensor(coordinator, tank))
     new_entities.append(ColdestWaterTemperatureSensor(coordinator, tank))
     new_entities.append(ChargeSensor(coordinator, tank))
     new_entities.append(ElectricHeatSensor(coordinator, tank))
     new_entities.append(IndirectHeatSensor(coordinator, tank))
+    new_entities.append(LowChargeSensor(coordinator, tank))
+    new_entities.append(NoChargeSensor(coordinator, tank))
+    new_entities.append(PowerSensor(coordinator, tank))
+    new_entities.append(EnergySensor(tank))
 
     async_add_entities(new_entities)
 
@@ -112,6 +116,10 @@ class ChargeSensor(SensorBase):
     @property
     def state(self):
         return self._tank.charge
+
+    @property
+    def icon(self):
+        return "hass:water-percent"
 
     @property
     def name(self):
@@ -206,3 +214,89 @@ class ElectricHeatSensor(BinarySensorBase):
     @property
     def name(self):
         return f"Electric Heat"
+
+class NoChargeSensor(BinarySensorBase):
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__( coordinator, tank)
+        self._state = STATE_OFF
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_no_charge"
+
+    @property
+    def is_on(self):
+        return self._tank.charge < 0.5
+
+    @property
+    def icon(self):
+        return "hass:water-remove-outline"
+
+    @property
+    def name(self):
+        return f"No Hot Water"
+
+class LowChargeSensor(BinarySensorBase):
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__( coordinator, tank)
+        self._state = STATE_OFF
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_low_charge"
+
+    @property
+    def is_on(self):
+        return self._tank.charge < 5
+
+    @property
+    def icon(self):
+        return "hass:water-percent-alert"
+
+    @property
+    def name(self):
+        return f"Low Hot Water"
+
+class PowerSensor(SensorBase):
+
+    device_class = DEVICE_CLASS_POWER
+    state_class = "measurement"
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__(coordinator,tank)
+        self._state = 0
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_power"
+
+    @property
+    def state(self):
+        return 3300 if self._tank.electic_heat_source else 0
+
+    @property
+    def unit_of_measurement(self):
+        return POWER_WATT;
+
+    @property
+    def name(self):
+        return f"Mixergy Electric Heat Power"
+
+class EnergySensor(IntegrationSensor):
+
+    def __init__(self, tank:Tank):
+        super().__init__(
+            name="Mixergy Electric Heat Energy",
+            source_entity="sensor.mixergy_electric_heat_power",
+            round_digits=2,
+            unit_prefix="k",
+            unit_time="h",
+            integration_method="left",
+            unique_id=f"mixergy_{tank.tank_id}_energy"
+        )
+
+    @property
+    def icon(self):
+        return "mdi:lightning-bolt"
