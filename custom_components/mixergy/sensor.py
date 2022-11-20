@@ -215,6 +215,26 @@ class ElectricHeatSensor(BinarySensorBase):
     def name(self):
         return f"Electric Heat"
 
+class HeatPumpHeatSensor(BinarySensorBase):
+
+    device_class = DEVICE_CLASS_ENERGY
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__( coordinator, tank)
+        self._state = STATE_OFF
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_heatpump_heat"
+
+    @property
+    def is_on(self):
+        return self._tank.heatpump_heat_source
+
+    @property
+    def name(self):
+        return f"HeatPump Heat"
+
 class NoChargeSensor(BinarySensorBase):
 
     def __init__(self, coordinator, tank:Tank):
@@ -278,7 +298,7 @@ class PowerSensor(SensorBase):
 
     @property
     def unit_of_measurement(self):
-        return POWER_WATT;
+        return POWER_WATT
 
     @property
     def name(self):
