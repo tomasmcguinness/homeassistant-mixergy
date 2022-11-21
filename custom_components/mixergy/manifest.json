@@ -1,7 +1,7 @@
 {
     "domain": "mixergy",
     "name": "Mixergy",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "config_flow": true,
     "documentation": "https://github.com/tomasmcguinness/homeassistant-mixergy",
     "issue_tracker": "https://github.com/tomasmcguinness/homeassistant-mixergy/issues",
