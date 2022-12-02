@@ -69,8 +69,9 @@ def _register_services(hass):
 
     async def mixergy_set_charge(call):
 
+        charge = call.data[ATTR_CHARGE]
+
         tasks = [
-            charge = call.data[ATTR_CHARGE]
             tank.set_target_charge(charge)
             for tank in hass.data[DOMAIN].values()
             if isinstance(tank, Tank)
@@ -84,8 +85,9 @@ def _register_services(hass):
 
     async def mixergy_set_target_temperature(call):
 
+        temperature = call.data[ATTR_TEMPERATURE]
+
         tasks = [
-            temperature = call.data[ATTR_TEMPERATURE]
             tank.set_target_temperature(temperature)
             for tank in hass.data[DOMAIN].values()
             if isinstance(tank, Tank)
