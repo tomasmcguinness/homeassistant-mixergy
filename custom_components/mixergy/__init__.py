@@ -1,4 +1,4 @@
-from .const import ATTR_CHARGE, SERVICE_SET_CHARGE
+from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE
 import logging
 import asyncio
 import voluptuous as vol
