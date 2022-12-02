@@ -66,7 +66,7 @@ class Tank:
 
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.put(self._settings_url, headers=headers, json={'max_temperature': temperature }) as resp:
+        async with session.put(self._settings_url, headers=headers, json={'max_temp': temperature }) as resp:
 
             if resp.status != 200:
                 _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._control_url, resp.status)
