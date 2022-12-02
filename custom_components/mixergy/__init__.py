@@ -70,7 +70,8 @@ def _register_services(hass):
     async def mixergy_set_charge(call):
 
         tasks = [
-            tank.set_target_charge(call.data)
+            charge = call.data[ATTR_CHARGE]
+            tank.set_target_charge(charge)
             for tank in hass.data[DOMAIN].values()
             if isinstance(tank, Tank)
         ]
@@ -81,6 +82,21 @@ def _register_services(hass):
         if None not in results:
             _LOGGER.warning("The request to charge the tank did not succeed")
 
+    async def mixergy_set_target_temperature(call):
+
+        tasks = [
+            temperature = call.data[ATTR_TEMPERATURE]
+            tank.set_target_temperature(temperature)
+            for tank in hass.data[DOMAIN].values()
+            if isinstance(tank, Tank)
+        ]
+
+        results = await asyncio.gather(*tasks)
+
+        # Note that we'll get a "None" value for a successful call
+        if None not in results:
+            _LOGGER.warning("The request to change the target temperature of the tank did not succeed")
+
     if not hass.services.has_service(DOMAIN, SERVICE_SET_CHARGE):
         # Register a local handler for scene activation
         hass.services.async_register(
@@ -90,6 +106,19 @@ def _register_services(hass):
             schema=vol.Schema(
                 {
                     vol.Required(ATTR_CHARGE): cv.positive_int
+                }
+            ),
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SET_TARGET_TEMPERATURE):
+        # Register a local handler for scene activation
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_CHARGE,
+            verify_domain_control(hass, DOMAIN)(mixergy_set_target_temperature),
+            schema=vol.Schema(
+                {
+                    vol.Required(ATTR_TEMPERATURE): cv.positive_int
                 }
             ),
         )

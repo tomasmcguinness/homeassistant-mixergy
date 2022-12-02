@@ -12,3 +12,16 @@ mixergy_set_charge:
         number:
           min: 0
           max: 100
+mixergy_set_target_temperature:
+  name: Set Target Temperature
+  description: Sets the target temperature of the water in Mixergy tank.
+  fields:
+    temperature:
+      name: Temperature
+      description: The target temperature of your Mixergy tank
+      example: 55
+      required: true
+      selector:
+        number:
+          min: 50
+          max: 65

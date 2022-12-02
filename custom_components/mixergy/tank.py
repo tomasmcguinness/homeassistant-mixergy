@@ -45,9 +45,8 @@ class Tank:
     async def test_connection(self):
         return await self.fetch_tank_information()
 
-    async def set_target_charge(self, data):
-        charge = data[ATTR_CHARGE]
-
+    async def set_target_charge(self, charge):
+        
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         headers = {'Authorization': f'Bearer {self._token}'}
@@ -56,6 +55,20 @@ class Tank:
 
             if resp.status != 200:
                 _LOGGER.error("Call to %s to set the desired charge failed with status %i", self._control_url, resp.status)
+                return
+
+            self.fetch_tank_information()
+
+    async def set_target_temperature(self, temperature):
+       
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'max_temperature': temperature }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._control_url, resp.status)
                 return
 
             self.fetch_tank_information()
@@ -162,10 +175,13 @@ class Tank:
 
                 self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]["href"]
                 self._control_url = tank_url_result["_links"]["control"]["href"]
+                self._settings_url = tank_url_result["_links"]["settings"]["href"]
+
                 self.modelCode = tank_url_result["tankModelCode"]
 
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
                 _LOGGER.debug("Control URL is %s", self._control_url)
+                _LOGGER.debug("Settings URL is %s", self._settings_url)
 
                 return True
 
@@ -205,7 +221,7 @@ class Tank:
 
             self._charge = new_charge
 
-            # Fetch information about the state of the heating.
+            # Fetch information about the current state of the heating.
 
             state = json.loads(tank_result["state"])
 
