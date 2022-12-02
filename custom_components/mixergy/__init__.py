@@ -116,7 +116,7 @@ def _register_services(hass):
         # Register a local handler for scene activation
         hass.services.async_register(
             DOMAIN,
-            SERVICE_SET_CHARGE,
+            SERVICE_SET_TARGET_TEMPERATURE,
             verify_domain_control(hass, DOMAIN)(mixergy_set_target_temperature),
             schema=vol.Schema(
                 {
