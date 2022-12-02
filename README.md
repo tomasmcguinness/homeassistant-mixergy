@@ -1,6 +1,6 @@
 # Home Assistant Mixergy Smart Hot Water Tank Integration
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
 Add support for Mixergy's smart water tank into Home Assistant. This integration will return the current temperatures at the the top and bottom of the tank, the tank's current charge, the state of the heating and the energy used by the direct heating element. It also has sensors to report low charge (< 5%) and no change (0%).
 
@@ -18,11 +18,11 @@ Alternatively, you can copy the contents of the mixergy folder into your custom_
 
 ## Setup
 
-Once installed, the integration will then be available as an integration you can install
+Once installed, the integration will then be available as an integration you can install.
 
 ![image](https://user-images.githubusercontent.com/302741/130430354-cbe935cc-fa55-4cec-bcb2-333409e7ebdd.png)
 
-You then need to provide your Mixergy credentials and the serial number of your tank. 
+You then need to provide your Mixergy credentials and the serial number of your tank. You can find the serial number physically on the tank, or via [mixergy.io](https://www.mixergy.io/).
 
 ![image](https://user-images.githubusercontent.com/302741/130430401-7499d0f8-872c-4062-a743-49d5fd686fcd.png)
 
@@ -40,7 +40,7 @@ mixergy.mixergy_set_target_temperature. It allows you to set the target temperat
 This integration is useful as it provides the state of your Mixergy tank via the API, but there are numerous enhancements I would like to make.
 
 * ~~Add the component to HACS~~
-* Add to the HACS default repository list (There is a PR open for this)
+* ~~Add to the HACS default repository list (There is a PR open for this)~~
 * ~~Add a service to enable the charge to be set, so you can boost via HA~~
 * ~~Put better icons into the status~~
 * Ensure authentication token expiry is handled correctly. (Been told the token doesn't expire at present)

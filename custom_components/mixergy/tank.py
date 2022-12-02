@@ -27,8 +27,9 @@ class Tank:
         self._hot_water_temperature = -1
         self._coldest_water_temperature = -1
         self._charge = -1
-        self._eletric_heat = False
-        self._indriect_heat = False
+        self._indirect_heat_source = False
+        self._electric_heat_source = False
+        self._heatpump_heat_source = False
         self._hasFetched = False
         self._token = ""
         self._latest_measurement_url = ""
@@ -232,11 +233,23 @@ class Tank:
 
             if heat_source == "Indirect":
                 self._electric_heat_source = False
+                self._heatpump_heat_source = False
                 self._indirect_heat_source = heat_source_on
 
             elif heat_source == "Electric":
                 self._electric_heat_source = heat_source_on
                 self._indirect_heat_source = False
+                self._heatpump_heat_source = False
+
+            elif heat_source == "HeatPump":
+                self._heatpump_heat_source = heat_source_on
+                self._indirect_heat_source = False
+                self._electric_heat_source = False
+
+            else:
+                self._indirect_heat_source = False
+                self._electric_heat_source = False
+                self._heatpump_heat_source = False
 
     async def fetch_data(self):
 
@@ -283,3 +296,7 @@ class Tank:
     @property
     def electic_heat_source(self):
         return self._electric_heat_source
+
+    @property
+    def heatpump_heat_source(self):
+        return self._heatpump_heat_source
