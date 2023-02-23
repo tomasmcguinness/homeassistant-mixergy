@@ -1,10 +1,9 @@
 import logging
 from datetime import timedelta
-from homeassistant.const import DEVICE_CLASS_ENERGY, DEVICE_CLASS_POWER, PERCENTAGE, TEMP_CELSIUS, STATE_OFF, POWER_WATT
+from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, STATE_OFF, POWER_WATT
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.integration.sensor import IntegrationSensor
-from homeassistant.components.binary_sensor import BinarySensorEntity, DEVICE_CLASS_HEAT
-from homeassistant.components.sensor import DEVICE_CLASS_TEMPERATURE
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from .const import DOMAIN
 from .tank import Tank
 from homeassistant.helpers.update_coordinator import (
@@ -128,7 +127,7 @@ class ChargeSensor(SensorBase):
 
 class HotWaterTemperatureSensor(SensorBase):
 
-    device_class = DEVICE_CLASS_TEMPERATURE
+    device_class = SensorDeviceClass.TEMPERATURE
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
@@ -152,7 +151,7 @@ class HotWaterTemperatureSensor(SensorBase):
 
 class ColdestWaterTemperatureSensor(SensorBase):
 
-    device_class = DEVICE_CLASS_TEMPERATURE
+    device_class = SensorDeviceClass.TEMPERATURE
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__(coordinator, tank)
@@ -175,7 +174,7 @@ class ColdestWaterTemperatureSensor(SensorBase):
 
 class IndirectHeatSensor(BinarySensorBase):
 
-    device_class = DEVICE_CLASS_HEAT
+    device_class = SensorDeviceClass.HEAT
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
@@ -198,7 +197,7 @@ class IndirectHeatSensor(BinarySensorBase):
 
 class ElectricHeatSensor(BinarySensorBase):
 
-    device_class = DEVICE_CLASS_ENERGY
+    device_class = SensorDeviceClass.ENERGY
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
@@ -218,7 +217,7 @@ class ElectricHeatSensor(BinarySensorBase):
 
 class HeatPumpHeatSensor(BinarySensorBase):
 
-    device_class = DEVICE_CLASS_ENERGY
+    device_class = SensorDeviceClass.ENERGY
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
@@ -282,7 +281,7 @@ class LowChargeSensor(BinarySensorBase):
 
 class PowerSensor(SensorBase):
 
-    device_class = DEVICE_CLASS_POWER
+    device_class = SensorDeviceClass.POWER
     state_class = "measurement"
 
     def __init__(self, coordinator, tank:Tank):
