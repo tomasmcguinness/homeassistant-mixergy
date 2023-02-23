@@ -1,12 +1,13 @@
 {
     "domain": "mixergy",
     "name": "Mixergy",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "config_flow": true,
     "documentation": "https://github.com/tomasmcguinness/homeassistant-mixergy",
     "issue_tracker": "https://github.com/tomasmcguinness/homeassistant-mixergy/issues",
     "dependencies": ["integration"],
     "codeowners": ["@tomasmcguinness"],
     "requirements": [],
-    "iot_class": "cloud_polling"
+    "iot_class": "cloud_polling",
+    "integration_type": "device"
   }
