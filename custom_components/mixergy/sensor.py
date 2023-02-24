@@ -2,7 +2,9 @@ import logging
 from datetime import timedelta
 from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, STATE_OFF, POWER_WATT
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.integration.sensor import IntegrationSensor
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from .const import DOMAIN
 from .tank import Tank
@@ -174,7 +176,7 @@ class ColdestWaterTemperatureSensor(SensorBase):
 
 class IndirectHeatSensor(BinarySensorBase):
 
-    device_class = SensorDeviceClass.HEAT
+    device_class = BinarySensorDeviceClass.HEAT
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__( coordinator, tank)
