@@ -1,0 +1,20 @@
+{
+    "config": {
+        "error": {
+            "invalidat_username": "Utilizador invalido",
+            "cannot_connect": "Falha na ligação ao Mixergy API",
+            "tank_not_found": "Tabk com o numero de serie indicado não existe",
+            "invalid_auth": "Falha na autenticação.",
+            "unknown": "Algo correu mal. Por favor tente novamente."
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "serial_number": "Número de Série",
+                    "password": "Password",
+                    "username": "Utilizado"
+                }
+            }
+        }
+   }
+}
