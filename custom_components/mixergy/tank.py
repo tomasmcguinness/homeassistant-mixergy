@@ -35,6 +35,7 @@ class Tank:
         self._latest_measurement_url = ""
         self.model = ""
         self.firmware_version = "0.0.0"
+        self._target_temperature = -1
 
     @property
     def tank_id(self):
@@ -251,6 +252,17 @@ class Tank:
                 self._electric_heat_source = False
                 self._heatpump_heat_source = False
 
+        async with session.get(self._settings_url, headers=headers) as resp:
+
+            if resp.status != 200:
+                _LOGGER.info("Fetch of the settings %s failed with status %i", self._settings_url, resp.status)
+                return
+
+            tank_result = await resp.json()
+            _LOGGER.debug(tank_result)
+
+            self._target_temperature = tank_result["max_temp"]
+
     async def fetch_data(self):
 
         _LOGGER.info('Fetching data....')
@@ -300,3 +312,7 @@ class Tank:
     @property
     def heatpump_heat_source(self):
         return self._heatpump_heat_source
+    
+    @property
+    def target_temperature(self):
+        return self._target_temperature

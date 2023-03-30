@@ -41,7 +41,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(NoChargeSensor(coordinator, tank))
     new_entities.append(PowerSensor(coordinator, tank))
     new_entities.append(EnergySensor(tank))
-
+    new_entities.append(TargetTemperatureSensor(tank))
+    
     async_add_entities(new_entities)
 
 class SensorBase(CoordinatorEntity,SensorEntity):
@@ -173,6 +174,29 @@ class ColdestWaterTemperatureSensor(SensorBase):
     @property
     def name(self):
         return f"Coldest Water Temperature"
+    
+class TargetTemperatureSensor(SensorBase):
+
+    device_class = SensorDeviceClass.TEMPERATURE
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__(coordinator, tank)
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.serial_number}_target_temperature"
+
+    @property
+    def state(self):
+        return self._tank.target_temperature
+
+    @property
+    def unit_of_measurement(self):
+        return TEMP_CELSIUS
+
+    @property
+    def name(self):
+        return f"Target Temperature"
 
 class IndirectHeatSensor(BinarySensorBase):
 
