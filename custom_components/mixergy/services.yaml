@@ -24,4 +24,4 @@ mixergy_set_target_temperature:
       selector:
         number:
           min: 50
-          max: 60
+          max: 70
