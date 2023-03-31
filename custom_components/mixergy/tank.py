@@ -258,10 +258,12 @@ class Tank:
                 _LOGGER.info("Fetch of the settings %s failed with status %i", self._settings_url, resp.status)
                 return
 
-            tank_result = await resp.json()
-            _LOGGER.debug(tank_result)
+            # The settings API returns text/plain as the content-type, so using the resp.json() fails.
+            # Load it as a bit of JSON via the text.
+            json_object = json.loads(resp.text())
+            _LOGGER.debug(json_object)
 
-            self._target_temperature = tank_result["max_temp"]
+            self._target_temperature = json_object["max_temp"]
 
     async def fetch_data(self):
 
