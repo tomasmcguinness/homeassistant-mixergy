@@ -260,7 +260,8 @@ class Tank:
 
             # The settings API returns text/plain as the content-type, so using the resp.json() fails.
             # Load it as a bit of JSON via the text.
-            json_object = json.loads(resp.text())
+            response_text = await resp.text()
+            json_object = json.loads(response_text)
             _LOGGER.debug(json_object)
 
             self._target_temperature = json_object["max_temp"]
