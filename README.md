@@ -10,6 +10,8 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 ### HACS
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tomasmcguinness&repository=homeassistant-mixergy&category=integration)
+
 To install via HACS, you must first add the repository and then add the integration.
 
 ### Manually
