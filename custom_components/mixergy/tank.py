@@ -233,7 +233,7 @@ class Tank:
             vacation = False
 
             # Source is only present when vacation is enabled it seems
-            if "source" in source:
+            if "source" in current:
                 source = current["source"]
                 vacation = source == "Vacation"
 
