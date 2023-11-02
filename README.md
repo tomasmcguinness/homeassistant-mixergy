@@ -10,6 +10,8 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 ### HACS
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=tomasmcguinness&repository=homeassistant-mixergy&category=integration)
+
 To install via HACS, you must first add the repository and then add the integration.
 
 ### Manually
@@ -28,10 +30,10 @@ You then need to provide your Mixergy credentials and the serial number of your 
 
 ## Services
 
-This integration offers two services
+This integration offers two services:
 
-mixergy.mixergy_set_charge. It allows you to provide a target charge percentage.
-mixergy.mixergy_set_target_temperature. It allows you to set the target temperature of the water.
+`mixergy.mixergy_set_charge` - It allows you to provide a target charge percentage.
+`mixergy.mixergy_set_target_temperature` - It allows you to set the target temperature of the water.
 
 ![image](https://user-images.githubusercontent.com/302741/134326151-7e1583fe-f3b7-482f-82ab-016f2f662cb6.png)
 
