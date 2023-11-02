@@ -42,6 +42,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(PowerSensor(coordinator, tank))
     new_entities.append(EnergySensor(tank))
     new_entities.append(TargetTemperatureSensor(coordinator, tank))
+    new_entities.append(HolidayModeSensor(coordinator, tank))
     
     async_add_entities(new_entities)
 
