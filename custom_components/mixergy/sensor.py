@@ -346,3 +346,26 @@ class EnergySensor(IntegrationSensor):
     @property
     def icon(self):
         return "mdi:lightning-bolt"
+
+
+class HolidayModeSensor(BinarySensorBase):
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__( coordinator, tank)
+        self._state = STATE_OFF
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_holiday_mode"
+
+    @property
+    def is_on(self):
+        return self._tank.in_holiday_mode
+
+    @property
+    def icon(self):
+        return "mdi:airplane-takeoff"
+
+    @property
+    def name(self):
+        return f"Holiday Mode"

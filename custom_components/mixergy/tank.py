@@ -36,6 +36,7 @@ class Tank:
         self.model = ""
         self.firmware_version = "0.0.0"
         self._target_temperature = -1
+        self._in_holiday_mode = False
 
     @property
     def tank_id(self):
@@ -229,28 +230,41 @@ class Tank:
 
             current = state["current"]
 
-            heat_source = current["heat_source"]
-            heat_source_on = current["immersion"] == "On"
+            source = current["source"]
 
-            if heat_source == "Indirect":
+            if source == "Vacation":
+                self._in_holiday_mode = True
+
+                # Assume it's all off as the tank is in holiday mode
                 self._electric_heat_source = False
                 self._heatpump_heat_source = False
-                self._indirect_heat_source = heat_source_on
-
-            elif heat_source == "Electric":
-                self._electric_heat_source = heat_source_on
                 self._indirect_heat_source = False
-                self._heatpump_heat_source = False
-
-            elif heat_source == "HeatPump":
-                self._heatpump_heat_source = heat_source_on
-                self._indirect_heat_source = False
-                self._electric_heat_source = False
 
             else:
-                self._indirect_heat_source = False
-                self._electric_heat_source = False
-                self._heatpump_heat_source = False
+                self._in_holiday_mode = False
+
+                heat_source = current["heat_source"]
+                heat_source_on = current["immersion"] == "On"
+
+                if heat_source == "Indirect":
+                    self._electric_heat_source = False
+                    self._heatpump_heat_source = False
+                    self._indirect_heat_source = heat_source_on
+
+                elif heat_source == "Electric":
+                    self._electric_heat_source = heat_source_on
+                    self._indirect_heat_source = False
+                    self._heatpump_heat_source = False
+
+                elif heat_source == "HeatPump":
+                    self._heatpump_heat_source = heat_source_on
+                    self._indirect_heat_source = False
+                    self._electric_heat_source = False
+
+                else:
+                    self._indirect_heat_source = False
+                    self._electric_heat_source = False
+                    self._heatpump_heat_source = False
 
         async with session.get(self._settings_url, headers=headers) as resp:
 
@@ -311,6 +325,10 @@ class Tank:
     @property
     def electic_heat_source(self):
         return self._electric_heat_source
+
+    @property
+    def in_holiday_mode(self):
+        return self._in_holiday_mode
 
     @property
     def heatpump_heat_source(self):
