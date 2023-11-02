@@ -230,9 +230,14 @@ class Tank:
 
             current = state["current"]
 
-            source = current["source"]
+            vacation = False
 
-            if source == "Vacation":
+            # Source is only present when vacation is enabled it seems
+            if "source" in source:
+                source = current["source"]
+                vacation = source == "Vacation"
+
+            if vacation:
                 self._in_holiday_mode = True
 
                 # Assume it's all off as the tank is in holiday mode
