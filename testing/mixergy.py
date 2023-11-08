@@ -103,3 +103,6 @@ for i, subjobj in enumerate(tanks):
 
         print("Heat Source:", heat_source)
         print("Heat Source On:", heat_source_on)
+
+        pv_energy = current["pvEnergy"]
+        print("PV Energy:", pv_energy)
