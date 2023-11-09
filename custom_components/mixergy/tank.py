@@ -37,6 +37,7 @@ class Tank:
         self.firmware_version = "0.0.0"
         self._target_temperature = -1
         self._in_holiday_mode = False
+        self._pv_power = 0
 
     @property
     def tank_id(self):
@@ -248,6 +249,11 @@ class Tank:
             else:
                 self._in_holiday_mode = False
 
+                if "pvEnergy" in current:
+                    self._pv_power = current["pvEnergy"] / 16000
+                else:
+                    self._pv_power = 0
+
                 heat_source = current["heat_source"]
                 heat_source_on = current["immersion"] == "On"
 
@@ -270,6 +276,8 @@ class Tank:
                     self._indirect_heat_source = False
                     self._electric_heat_source = False
                     self._heatpump_heat_source = False
+
+
 
         async with session.get(self._settings_url, headers=headers) as resp:
 
@@ -342,3 +350,7 @@ class Tank:
     @property
     def target_temperature(self):
         return self._target_temperature
+    
+    @property
+    def pv_power(self):
+        return self._pv_power
