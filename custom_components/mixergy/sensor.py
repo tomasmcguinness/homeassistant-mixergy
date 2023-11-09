@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, STATE_OFF, POWER_WATT
+from homeassistant.const import PERCENTAGE, TEMP_CELSIUS, STATE_OFF, POWER_WATT, POWER_KILO_WATT
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.integration.sensor import IntegrationSensor
@@ -368,7 +368,7 @@ class PVPowerSensor(SensorBase):
 
     @property
     def unit_of_measurement(self):
-        return POWER_WATT
+        return POWER_KILO_WATT
 
     @property
     def name(self):
