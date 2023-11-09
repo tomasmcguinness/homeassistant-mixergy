@@ -207,11 +207,16 @@ class Tank:
             self._hot_water_temperature = tank_result["topTemperature"]
             self._coldest_water_temperature = tank_result["bottomTemperature"]
 
+            if "pvEnergy" in tank_result:
+                self._pv_power = tank_result["pvEnergy"] / 60000
+            else:
+                self._pv_power = 0
+
             new_charge = tank_result["charge"]
 
             _LOGGER.debug("Current: %f", self._charge)
             _LOGGER.debug("New: %f", new_charge)
-
+            
             if new_charge != self._charge:
                 _LOGGER.debug('Sending charge_changed event')
 
@@ -248,11 +253,6 @@ class Tank:
 
             else:
                 self._in_holiday_mode = False
-
-                if "pvEnergy" in current:
-                    self._pv_power = current["pvEnergy"] / 60000
-                else:
-                    self._pv_power = 0
 
                 heat_source = current["heat_source"]
                 heat_source_on = current["immersion"] == "On"
