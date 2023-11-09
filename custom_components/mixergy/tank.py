@@ -250,7 +250,7 @@ class Tank:
                 self._in_holiday_mode = False
 
                 if "pvEnergy" in current:
-                    self._pv_power = current["pvEnergy"] / 16000
+                    self._pv_power = current["pvEnergy"] / 60000
                 else:
                     self._pv_power = 0
 
