@@ -27,7 +27,7 @@ class Tank:
         self._hot_water_temperature = -1
         self._coldest_water_temperature = -1
         self._charge = -1
-        self._target_charge = -1
+        self._target_charge = 0
         self._indirect_heat_source = False
         self._electric_heat_source = False
         self._heatpump_heat_source = False
@@ -237,15 +237,12 @@ class Tank:
 
             current = state["current"]
 
-            new_target_charge = -1
+            new_target_charge = 0
 
             if "target" in current:
                 new_target_charge = current["target"]
             else:
-                new_target_charge = -1
-
-            _LOGGER.debug("Current Target: %f", self._target_charge)
-            _LOGGER.debug("New Target: %f", new_target_charge)
+                new_target_charge = 0
 
             self._target_charge = new_target_charge
 
@@ -289,8 +286,6 @@ class Tank:
                     self._indirect_heat_source = False
                     self._electric_heat_source = False
                     self._heatpump_heat_source = False
-
-
 
         async with session.get(self._settings_url, headers=headers) as resp:
 
