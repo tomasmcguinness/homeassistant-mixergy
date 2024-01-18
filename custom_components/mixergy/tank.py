@@ -27,6 +27,7 @@ class Tank:
         self._hot_water_temperature = -1
         self._coldest_water_temperature = -1
         self._charge = -1
+        self._target_charge = -1
         self._indirect_heat_source = False
         self._electric_heat_source = False
         self._heatpump_heat_source = False
@@ -236,6 +237,18 @@ class Tank:
 
             current = state["current"]
 
+            new_target_charge = -1
+
+            if "target" in current:
+                new_target_charge = current["target"]
+            else:
+                new_target_charge = -1
+
+            _LOGGER.debug("Current Target: %f", self._target_charge)
+            _LOGGER.debug("New Target: %f", new_target_charge)
+
+            self._target_charge = new_target_charge
+
             vacation = False
 
             # Source is only present when vacation is enabled it seems
@@ -330,6 +343,10 @@ class Tank:
     @property
     def charge(self):
         return self._charge
+
+    @property
+    def target_charge(self):
+        return self._target_charge
 
     @property
     def indirect_heat_source(self):
