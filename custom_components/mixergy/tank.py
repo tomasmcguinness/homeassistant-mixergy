@@ -267,17 +267,17 @@ class Tank:
                 heat_source = current["heat_source"]
                 heat_source_on = current["immersion"] == "On"
 
-                if heat_source == "Indirect":
+                if heat_source.lower() == "indirect":
                     self._electric_heat_source = False
                     self._heatpump_heat_source = False
                     self._indirect_heat_source = heat_source_on
 
-                elif heat_source == "Electric":
+                elif heat_source.lower() == "electric":
                     self._electric_heat_source = heat_source_on
                     self._indirect_heat_source = False
                     self._heatpump_heat_source = False
 
-                elif heat_source == "HeatPump":
+                elif heat_source.lower() == "heatpump":
                     self._heatpump_heat_source = heat_source_on
                     self._indirect_heat_source = False
                     self._electric_heat_source = False
