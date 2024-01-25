@@ -264,20 +264,20 @@ class Tank:
             else:
                 self._in_holiday_mode = False
 
-                heat_source = current["heat_source"]
-                heat_source_on = current["immersion"] == "On"
+                heat_source = current["heat_source"].lower()
+                heat_source_on = current["immersion"].lower() == "on"
 
-                if heat_source.lower() == "indirect":
+                if heat_source == "indirect":
                     self._electric_heat_source = False
                     self._heatpump_heat_source = False
                     self._indirect_heat_source = heat_source_on
 
-                elif heat_source.lower() == "electric":
+                elif heat_source == "electric":
                     self._electric_heat_source = heat_source_on
                     self._indirect_heat_source = False
                     self._heatpump_heat_source = False
 
-                elif heat_source.lower() == "heatpump":
+                elif heat_source == "heatpump":
                     self._heatpump_heat_source = heat_source_on
                     self._indirect_heat_source = False
                     self._electric_heat_source = False
