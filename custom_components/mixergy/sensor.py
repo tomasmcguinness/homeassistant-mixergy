@@ -45,6 +45,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(TargetTemperatureSensor(coordinator, tank))
     new_entities.append(HolidayModeSensor(coordinator, tank))
     new_entities.append(PVPowerSensor(coordinator, tank))
+    new_entities.append(PVEnergySensor(tank))
     new_entities.append(IsChargingSensor(coordinator, tank))
     
     async_add_entities(new_entities)
@@ -422,6 +423,23 @@ class PVPowerSensor(SensorBase):
     @property
     def name(self):
         return f"Mixergy Electric PV Power"
+
+class PVEnergySensor(IntegrationSensor):
+
+    def __init__(self, tank:Tank):
+        super().__init__(
+            name="Mixergy Electric PV Energy",
+            source_entity="sensor.mixergy_electric_pv_power",
+            round_digits=2,
+            unit_prefix="k",
+            unit_time="h",
+            integration_method="left",
+            unique_id=f"mixergy_{tank.tank_id}_pv_energy"
+        )
+
+    @property
+    def icon(self):
+        return "mdi:lightning-bolt"
 
 class HolidayModeSensor(BinarySensorBase):
 
