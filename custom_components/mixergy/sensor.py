@@ -431,7 +431,7 @@ class PVEnergySensor(IntegrationSensor):
             name="Mixergy Electric PV Energy",
             source_entity="sensor.mixergy_electric_pv_power",
             round_digits=2,
-            unit_prefix="k",
+            unit_prefix=None, # PVPowerSensor is already in kW
             unit_time="h",
             integration_method="left",
             unique_id=f"mixergy_{tank.tank_id}_pv_energy"
