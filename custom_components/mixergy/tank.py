@@ -293,6 +293,12 @@ class Tank:
                     self._electric_heat_source = False
                     self._heatpump_heat_source = False
 
+    async def fetch_settings(self):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
         async with session.get(self._settings_url, headers=headers) as resp:
 
             if resp.status != 200:
@@ -316,6 +322,8 @@ class Tank:
         await self.fetch_tank_information()
 
         await self.fetch_last_measurement()
+
+        await self.fetch_settings()
 
         await self.publish_updates()
 
