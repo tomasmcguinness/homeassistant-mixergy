@@ -1,32 +1,21 @@
 import logging
 from datetime import timedelta
 from homeassistant.const import UnitOfPower, UnitOfTemperature, PERCENTAGE, STATE_OFF
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.components.integration.sensor import IntegrationSensor
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from .const import DOMAIN
 from .tank import Tank
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.info("Setting up entry based on user config")
 
-    tank = hass.data[DOMAIN][config_entry.entry_id]
-
-    async def async_update_data():
-        _LOGGER.info("Fetching data from Mixergy...")
-        await tank.fetch_data()
-
-    # Create a coordinator to fetch data from the Mixergy API.
-    coordinator = DataUpdateCoordinator(hass, _LOGGER, name="sensor", update_method = async_update_data, update_interval = timedelta(seconds=30))
-
-    await coordinator.async_config_entry_first_refresh()
+    entry = hass.data[DOMAIN][config_entry.entry_id]
+    tank = entry["tank"]
+    coordinator = entry["coordinator"]
 
     new_entities = []
 
@@ -460,7 +449,7 @@ class ClampPowerSensor(SensorBase):
 
     @property
     def unit_of_measurement(self):
-        return POWER_WATT
+        return UnitOfPower.WATT
 
     @property
     def name(self):
