@@ -19,7 +19,10 @@ CHARGE_SERVICE_SCHEMA: Final = make_entity_service_schema(
 )
 
 DOMAIN = "mixergy"
-PLATFORMS = ["sensor"]
+PLATFORMS = [
+    "sensor",
+    "switch",
+]
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass: HomeAssistant, config):

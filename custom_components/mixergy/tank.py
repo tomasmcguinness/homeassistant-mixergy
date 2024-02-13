@@ -40,6 +40,8 @@ class Tank:
         self._in_holiday_mode = False
         self._pv_power = 0
         self._clamp_power = 0
+        self._has_divert_exported_enabled = False
+        self._divert_exported_enabled = False
 
     @property
     def tank_id(self):
@@ -78,6 +80,20 @@ class Tank:
                 return
 
             self.fetch_tank_information()
+
+    async def set_divert_exported_enabled(self, enabled):
+       
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'divert_exported_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            self.fetch_settings()
 
     async def authenticate(self):
 
@@ -313,6 +329,12 @@ class Tank:
 
             self._target_temperature = json_object["max_temp"]
 
+            try:
+                self._divert_exported_enabled = json_object["divert_exported_enabled"]
+                self._has_divert_exported_enabled = True
+            except KeyError:
+                self._has_divert_exported_enabled = False
+
     async def fetch_data(self):
 
         _LOGGER.info('Fetching data....')
@@ -384,3 +406,11 @@ class Tank:
     @property
     def clamp_power(self):
         return self._clamp_power
+    
+    @property
+    def has_divert_exported_enabled(self):
+        return self._has_divert_exported_enabled
+    
+    @property
+    def divert_exported_enabled(self):
+        return self._divert_exported_enabled
