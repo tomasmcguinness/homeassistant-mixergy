@@ -4,8 +4,7 @@ from homeassistant.const import UnitOfPower, UnitOfTemperature, PERCENTAGE, STAT
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.integration.sensor import IntegrationSensor
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from .const import DOMAIN
 from .tank import Tank
 from homeassistant.helpers.update_coordinator import (
