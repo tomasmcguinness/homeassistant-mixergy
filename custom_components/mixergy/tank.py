@@ -94,7 +94,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._control_url, resp.status)
                 return
 
-            self.fetch_settings()
+            await self.fetch_settings()
 
     async def set_pv_charge_limit(self, value):
 
@@ -112,7 +112,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set PV charge limit failed with status %i", self._control_url, resp.status)
                 return
 
-            self.fetch_settings()
+            await self.fetch_settings()
 
     async def authenticate(self):
 
