@@ -36,7 +36,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(PVEnergySensor(tank))
     new_entities.append(ClampPowerSensor(coordinator, tank))
     new_entities.append(IsChargingSensor(coordinator, tank))
-    
+
     async_add_entities(new_entities)
 
 class SensorBase(MixergyEntityBase, SensorEntity):
@@ -73,7 +73,7 @@ class ChargeSensor(SensorBase):
     @property
     def name(self):
           return f"Current Charge"
-    
+
 class TargetChargeSensor(SensorBase):
 
     def __init__(self, coordinator, tank:Tank):
@@ -145,7 +145,7 @@ class ColdestWaterTemperatureSensor(SensorBase):
     @property
     def name(self):
         return f"Coldest Water Temperature"
-    
+
 class TargetTemperatureSensor(SensorBase):
 
     device_class = SensorDeviceClass.TEMPERATURE
@@ -275,7 +275,7 @@ class LowChargeSensor(BinarySensorBase):
     @property
     def name(self):
         return f"Low Hot Water"
-    
+
 class IsChargingSensor(BinarySensorBase):
 
     def __init__(self, coordinator, tank:Tank):

@@ -54,7 +54,7 @@ class Tank:
         return await self.fetch_tank_information()
 
     async def set_target_charge(self, charge):
-        
+
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         headers = {'Authorization': f'Bearer {self._token}'}
@@ -68,7 +68,7 @@ class Tank:
             self.fetch_tank_information()
 
     async def set_target_temperature(self, temperature):
-       
+
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         headers = {'Authorization': f'Bearer {self._token}'}
@@ -82,7 +82,7 @@ class Tank:
             self.fetch_tank_information()
 
     async def set_divert_exported_enabled(self, enabled):
-       
+
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         headers = {'Authorization': f'Bearer {self._token}'}
@@ -184,7 +184,7 @@ class Tank:
 
             tank_url = tank["_links"]["self"]["href"]
             self.firmwareVersion = tank["firmwareVersion"]
-            
+
             async with session.get(tank_url, headers=headers) as resp:
 
                 if resp.status != 200:
@@ -239,7 +239,7 @@ class Tank:
 
             _LOGGER.debug("Current: %f", self._charge)
             _LOGGER.debug("New: %f", new_charge)
-            
+
             if new_charge != self._charge:
                 _LOGGER.debug('Sending charge_changed event')
 
@@ -394,11 +394,11 @@ class Tank:
     @property
     def heatpump_heat_source(self):
         return self._heatpump_heat_source
-    
+
     @property
     def target_temperature(self):
         return self._target_temperature
-    
+
     @property
     def pv_power(self):
         return self._pv_power
@@ -410,7 +410,7 @@ class Tank:
     @property
     def has_pv_diverter(self):
         return self._has_pv_diverter
-    
+
     @property
     def divert_exported_enabled(self):
         return self._divert_exported_enabled
