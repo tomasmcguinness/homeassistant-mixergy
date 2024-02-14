@@ -40,7 +40,7 @@ class Tank:
         self._in_holiday_mode = False
         self._pv_power = 0
         self._clamp_power = 0
-        self._has_divert_exported_enabled = False
+        self._has_pv_diverter = False
         self._divert_exported_enabled = False
 
     @property
@@ -331,9 +331,9 @@ class Tank:
 
             try:
                 self._divert_exported_enabled = json_object["divert_exported_enabled"]
-                self._has_divert_exported_enabled = True
+                self._has_pv_diverter = True
             except KeyError:
-                self._has_divert_exported_enabled = False
+                self._has_pv_diverter = False
 
     async def fetch_data(self):
 
@@ -408,8 +408,8 @@ class Tank:
         return self._clamp_power
     
     @property
-    def has_divert_exported_enabled(self):
-        return self._has_divert_exported_enabled
+    def has_pv_diverter(self):
+        return self._has_pv_diverter
     
     @property
     def divert_exported_enabled(self):

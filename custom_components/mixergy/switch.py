@@ -41,7 +41,7 @@ class PVDivertSwitch(SwitchEntityBase):
     
     @property
     def available(self):
-        return super().available and self._tank.has_divert_exported_enabled
+        return super().available and self._tank.has_pv_diverter
 
     @property
     def is_on(self):
