@@ -42,6 +42,7 @@ class Tank:
         self._clamp_power = 0
         self._has_pv_diverter = False
         self._divert_exported_enabled = False
+        self._pv_charge_limit = 0
 
     @property
     def tank_id(self):
@@ -91,6 +92,24 @@ class Tank:
 
             if resp.status != 200:
                 _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            self.fetch_settings()
+
+    async def set_pv_charge_limit(self, value):
+
+        # Ensure values are within correct range
+        value = min(value, 100)
+        value = max(value, 0)
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'pv_charge_limit': value }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set PV charge limit failed with status %i", self._control_url, resp.status)
                 return
 
             self.fetch_settings()
@@ -331,6 +350,7 @@ class Tank:
 
             try:
                 self._divert_exported_enabled = json_object["divert_exported_enabled"]
+                self._pv_charge_limit = json_object["pv_charge_limit"]
                 self._has_pv_diverter = True
             except KeyError:
                 self._has_pv_diverter = False
@@ -414,3 +434,7 @@ class Tank:
     @property
     def divert_exported_enabled(self):
         return self._divert_exported_enabled
+
+    @property
+    def pv_charge_limit(self):
+        return self._pv_charge_limit

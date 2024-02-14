@@ -22,6 +22,7 @@ DOMAIN = "mixergy"
 PLATFORMS = [
     "sensor",
     "switch",
+    "number",
 ]
 _LOGGER = logging.getLogger(__name__)
 
