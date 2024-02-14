@@ -6,7 +6,7 @@ from homeassistant.components.integration.sensor import IntegrationSensor
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from .const import DOMAIN
 from .tank import Tank
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from .mixergy_entity import MixergyEntityBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,63 +39,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     
     async_add_entities(new_entities)
 
-class SensorBase(CoordinatorEntity,SensorEntity):
-
-    should_poll = True
+class SensorBase(MixergyEntityBase, SensorEntity):
 
     def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator)
-        self._tank = tank
+        super().__init__(coordinator, tank)
 
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._tank.serial_number)},
-            "manufacturer":"Mixergy Ltd",
-            "name":"Mixergy Tank",
-            "suggested_area":"garage",
-            "model":self._tank.modelCode,
-            "sw_version":self._tank.firmwareVersion
-        }
-
-    @property
-    def available(self) -> bool:
-        return self._tank.online
-
-    async def async_added_to_hass(self):
-        self._tank.register_callback(self.async_write_ha_state)
-
-    async def async_will_remove_from_hass(self):
-        self._tank.remove_callback(self.async_write_ha_state)
-
-class BinarySensorBase(CoordinatorEntity,BinarySensorEntity):
-
-    should_poll = True
+class BinarySensorBase(MixergyEntityBase, BinarySensorEntity):
 
     def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator)
-        self._tank = tank
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._tank.serial_number)},
-            "manufacturer":"Mixergy Ltd",
-            "name":"Mixergy Tank",
-            "suggested_area":"garage",
-            "model":self._tank.modelCode,
-            "sw_version":self._tank.firmwareVersion
-        }
-
-    @property
-    def available(self) -> bool:
-        return self._tank.online
-
-    async def async_added_to_hass(self):
-        self._tank.register_callback(self.async_write_ha_state)
-
-    async def async_will_remove_from_hass(self):
-        self._tank.remove_callback(self.async_write_ha_state)
+        super().__init__(coordinator, tank)
 
 class ChargeSensor(SensorBase):
 
