@@ -40,6 +40,9 @@ class Tank:
         self._in_holiday_mode = False
         self._pv_power = 0
         self._clamp_power = 0
+        self._has_pv_diverter = False
+        self._divert_exported_enabled = False
+        self._pv_charge_limit = 0
 
     @property
     def tank_id(self):
@@ -52,7 +55,7 @@ class Tank:
         return await self.fetch_tank_information()
 
     async def set_target_charge(self, charge):
-        
+
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         headers = {'Authorization': f'Bearer {self._token}'}
@@ -66,7 +69,7 @@ class Tank:
             self.fetch_tank_information()
 
     async def set_target_temperature(self, temperature):
-       
+
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
         headers = {'Authorization': f'Bearer {self._token}'}
@@ -78,6 +81,38 @@ class Tank:
                 return
 
             self.fetch_tank_information()
+
+    async def set_divert_exported_enabled(self, enabled):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'divert_exported_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_pv_charge_limit(self, value):
+
+        # Ensure values are within correct range
+        value = min(value, 100)
+        value = max(value, 0)
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'pv_charge_limit': value }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set PV charge limit failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
 
     async def authenticate(self):
 
@@ -168,7 +203,7 @@ class Tank:
 
             tank_url = tank["_links"]["self"]["href"]
             self.firmwareVersion = tank["firmwareVersion"]
-            
+
             async with session.get(tank_url, headers=headers) as resp:
 
                 if resp.status != 200:
@@ -184,6 +219,10 @@ class Tank:
                 self._settings_url = tank_url_result["_links"]["settings"]["href"]
 
                 self.modelCode = tank_url_result["tankModelCode"]
+
+                tank_configuration_json = tank_url_result["configuration"]
+                tank_configuration = json.loads(tank_configuration_json)
+                self._has_pv_diverter = (tank_configuration["mixergyPvType"] != "NO_INVERTER")
 
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
                 _LOGGER.debug("Control URL is %s", self._control_url)
@@ -223,7 +262,7 @@ class Tank:
 
             _LOGGER.debug("Current: %f", self._charge)
             _LOGGER.debug("New: %f", new_charge)
-            
+
             if new_charge != self._charge:
                 _LOGGER.debug('Sending charge_changed event')
 
@@ -293,6 +332,12 @@ class Tank:
                     self._electric_heat_source = False
                     self._heatpump_heat_source = False
 
+    async def fetch_settings(self):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
         async with session.get(self._settings_url, headers=headers) as resp:
 
             if resp.status != 200:
@@ -307,6 +352,12 @@ class Tank:
 
             self._target_temperature = json_object["max_temp"]
 
+            try:
+                self._divert_exported_enabled = json_object["divert_exported_enabled"]
+                self._pv_charge_limit = json_object["pv_charge_limit"]
+            except KeyError:
+                pass
+
     async def fetch_data(self):
 
         _LOGGER.info('Fetching data....')
@@ -316,6 +367,8 @@ class Tank:
         await self.fetch_tank_information()
 
         await self.fetch_last_measurement()
+
+        await self.fetch_settings()
 
         await self.publish_updates()
 
@@ -364,11 +417,11 @@ class Tank:
     @property
     def heatpump_heat_source(self):
         return self._heatpump_heat_source
-    
+
     @property
     def target_temperature(self):
         return self._target_temperature
-    
+
     @property
     def pv_power(self):
         return self._pv_power
@@ -376,3 +429,15 @@ class Tank:
     @property
     def clamp_power(self):
         return self._clamp_power
+    
+    @property
+    def has_pv_diverter(self):
+        return self._has_pv_diverter
+
+    @property
+    def divert_exported_enabled(self):
+        return self._divert_exported_enabled
+
+    @property
+    def pv_charge_limit(self):
+        return self._pv_charge_limit

@@ -1,4 +1,5 @@
 from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE
+from datetime import timedelta
 import logging
 import asyncio
 import voluptuous as vol
@@ -11,13 +12,18 @@ from homeassistant.helpers.service import verify_domain_control
 from .tank import Tank
 from typing import Any, Final, final
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 CHARGE_SERVICE_SCHEMA: Final = make_entity_service_schema(
     {vol.Optional("target_percentage"): cv.positive_int}
 )
 
 DOMAIN = "mixergy"
-PLATFORMS = ["sensor"]
+PLATFORMS = [
+    "sensor",
+    "switch",
+    "number",
+]
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass: HomeAssistant, config):
@@ -38,7 +44,18 @@ async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
 
     tank = Tank(hass, entry.data[CONF_USERNAME],entry.data[CONF_PASSWORD],entry.data["serial_number"])
 
-    hass.data[DOMAIN][entry.entry_id] = tank
+    async def async_update_data():
+        _LOGGER.info("Fetching data from Mixergy...")
+        await tank.fetch_data()
+
+    # Create a coordinator to fetch data from the Mixergy API.
+    coordinator = DataUpdateCoordinator(hass, _LOGGER, name="Mixergy", update_method = async_update_data, update_interval = timedelta(seconds=30))
+    await coordinator.async_config_entry_first_refresh()
+
+    hass.data[DOMAIN][entry.entry_id] = {
+        "tank": tank,
+        "coordinator": coordinator,
+    }
 
     _register_services(hass)
 
@@ -73,7 +90,7 @@ def _register_services(hass):
 
         tasks = [
             tank.set_target_charge(charge)
-            for tank in hass.data[DOMAIN].values()
+            for tank in [d["tank"] for d in hass.data[DOMAIN].values()]
             if isinstance(tank, Tank)
         ]
 
@@ -89,7 +106,7 @@ def _register_services(hass):
 
         tasks = [
             tank.set_target_temperature(temperature)
-            for tank in hass.data[DOMAIN].values()
+            for tank in [d["tank"] for d in hass.data[DOMAIN].values()]
             if isinstance(tank, Tank)
         ]
 

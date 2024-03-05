@@ -1,33 +1,21 @@
 import logging
 from datetime import timedelta
 from homeassistant.const import UnitOfPower, UnitOfTemperature, PERCENTAGE, STATE_OFF
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.components.integration.sensor import IntegrationSensor
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from .const import DOMAIN
 from .tank import Tank
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
+from .mixergy_entity import MixergyEntityBase
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.info("Setting up entry based on user config")
 
-    tank = hass.data[DOMAIN][config_entry.entry_id]
-
-    async def async_update_data():
-        _LOGGER.info("Fetching data from Mixergy...")
-        await tank.fetch_data()
-
-    # Create a coordinator to fetch data from the Mixergy API.
-    coordinator = DataUpdateCoordinator(hass, _LOGGER, name="sensor", update_method = async_update_data, update_interval = timedelta(seconds=30))
-
-    await coordinator.async_config_entry_first_refresh()
+    entry = hass.data[DOMAIN][config_entry.entry_id]
+    tank = entry["tank"]
+    coordinator = entry["coordinator"]
 
     new_entities = []
 
@@ -48,66 +36,18 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(PVEnergySensor(tank))
     new_entities.append(ClampPowerSensor(coordinator, tank))
     new_entities.append(IsChargingSensor(coordinator, tank))
-    
+
     async_add_entities(new_entities)
 
-class SensorBase(CoordinatorEntity,SensorEntity):
-
-    should_poll = True
+class SensorBase(MixergyEntityBase, SensorEntity):
 
     def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator)
-        self._tank = tank
+        super().__init__(coordinator, tank)
 
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._tank.serial_number)},
-            "manufacturer":"Mixergy Ltd",
-            "name":"Mixergy Tank",
-            "suggested_area":"garage",
-            "model":self._tank.modelCode,
-            "sw_version":self._tank.firmwareVersion
-        }
-
-    @property
-    def available(self) -> bool:
-        return self._tank.online
-
-    async def async_added_to_hass(self):
-        self._tank.register_callback(self.async_write_ha_state)
-
-    async def async_will_remove_from_hass(self):
-        self._tank.remove_callback(self.async_write_ha_state)
-
-class BinarySensorBase(CoordinatorEntity,BinarySensorEntity):
-
-    should_poll = True
+class BinarySensorBase(MixergyEntityBase, BinarySensorEntity):
 
     def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator)
-        self._tank = tank
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._tank.serial_number)},
-            "manufacturer":"Mixergy Ltd",
-            "name":"Mixergy Tank",
-            "suggested_area":"garage",
-            "model":self._tank.modelCode,
-            "sw_version":self._tank.firmwareVersion
-        }
-
-    @property
-    def available(self) -> bool:
-        return self._tank.online
-
-    async def async_added_to_hass(self):
-        self._tank.register_callback(self.async_write_ha_state)
-
-    async def async_will_remove_from_hass(self):
-        self._tank.remove_callback(self.async_write_ha_state)
+        super().__init__(coordinator, tank)
 
 class ChargeSensor(SensorBase):
 
@@ -133,7 +73,7 @@ class ChargeSensor(SensorBase):
     @property
     def name(self):
           return f"Current Charge"
-    
+
 class TargetChargeSensor(SensorBase):
 
     def __init__(self, coordinator, tank:Tank):
@@ -205,7 +145,7 @@ class ColdestWaterTemperatureSensor(SensorBase):
     @property
     def name(self):
         return f"Coldest Water Temperature"
-    
+
 class TargetTemperatureSensor(SensorBase):
 
     device_class = SensorDeviceClass.TEMPERATURE
@@ -335,7 +275,7 @@ class LowChargeSensor(BinarySensorBase):
     @property
     def name(self):
         return f"Low Hot Water"
-    
+
 class IsChargingSensor(BinarySensorBase):
 
     def __init__(self, coordinator, tank:Tank):
@@ -461,7 +401,7 @@ class ClampPowerSensor(SensorBase):
 
     @property
     def unit_of_measurement(self):
-        return POWER_WATT
+        return UnitOfPower.WATT
 
     @property
     def name(self):
