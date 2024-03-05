@@ -220,6 +220,10 @@ class Tank:
 
                 self.modelCode = tank_url_result["tankModelCode"]
 
+                tank_configuration_json = tank_url_result["configuration"]
+                tank_configuration = json.loads(tank_configuration_json)
+                self._has_pv_diverter = (tank_configuration["mixergyPvType"] != "NO_INVERTER")
+
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
                 _LOGGER.debug("Control URL is %s", self._control_url)
                 _LOGGER.debug("Settings URL is %s", self._settings_url)
@@ -351,9 +355,8 @@ class Tank:
             try:
                 self._divert_exported_enabled = json_object["divert_exported_enabled"]
                 self._pv_charge_limit = json_object["pv_charge_limit"]
-                self._has_pv_diverter = True
             except KeyError:
-                self._has_pv_diverter = False
+                pass
 
     async def fetch_data(self):
 
