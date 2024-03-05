@@ -39,6 +39,7 @@ class Tank:
         self._target_temperature = -1
         self._in_holiday_mode = False
         self._pv_power = 0
+        self._clamp_power = 0
 
     @property
     def tank_id(self):
@@ -213,6 +214,11 @@ class Tank:
             else:
                 self._pv_power = 0
 
+            if "clampPower" in tank_result:
+                self._clamp_power = tank_result["clampPower"]
+            else:
+                self._clamp_power = 0
+
             new_charge = tank_result["charge"]
 
             _LOGGER.debug("Current: %f", self._charge)
@@ -366,3 +372,7 @@ class Tank:
     @property
     def pv_power(self):
         return self._pv_power
+
+    @property
+    def clamp_power(self):
+        return self._clamp_power
