@@ -8,7 +8,8 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 ## Support
 
-If you use this integration, please consider sponsoring the project to ensure it can be kept up-to-date!
+If you use this integration, please consider sponsoring the project to ensure it can be kept up-to-date! 
+
 
 ## Installation
 
