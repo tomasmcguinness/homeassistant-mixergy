@@ -364,6 +364,10 @@ class PVPowerSensor(SensorBase):
     @property
     def name(self):
         return f"Mixergy Electric PV Power"
+    
+    @property
+    def available(self):
+        return super().available and self._tank.has_pv_diverter
 
 class PVEnergySensor(IntegrationSensor):
 
@@ -381,6 +385,10 @@ class PVEnergySensor(IntegrationSensor):
     @property
     def icon(self):
         return "mdi:lightning-bolt"
+    
+    @property
+    def available(self):
+        return super().available and self._tank.has_pv_diverter
 
 class ClampPowerSensor(SensorBase):
 
@@ -406,6 +414,10 @@ class ClampPowerSensor(SensorBase):
     @property
     def name(self):
         return f"Clamp Power"
+    
+    @property
+    def available(self):
+        return super().available and self._tank.has_pv_diverter
 
 class HolidayModeSensor(BinarySensorBase):
 
