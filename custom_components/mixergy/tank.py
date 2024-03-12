@@ -37,12 +37,19 @@ class Tank:
         self.model = ""
         self.firmware_version = "0.0.0"
         self._target_temperature = -1
+        self._dsr_enabled = False
+        self._frost_protection_enabled = False
+        self._distributed_computing_enabled = False
+        self._cleansing_temperature = 0
         self._in_holiday_mode = False
         self._pv_power = 0
         self._clamp_power = 0
         self._has_pv_diverter = False
         self._divert_exported_enabled = False
+        self._pv_cut_in_threshold = 0
         self._pv_charge_limit = 0
+        self._pv_target_current = 0
+        self._pv_over_temperature = 0
 
     @property
     def tank_id(self):
@@ -66,7 +73,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set the desired charge failed with status %i", self._control_url, resp.status)
                 return
 
-            self.fetch_tank_information()
+            await self.fetch_last_measurement()
 
     async def set_target_temperature(self, temperature):
 
@@ -80,7 +87,67 @@ class Tank:
                 _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._control_url, resp.status)
                 return
 
-            self.fetch_tank_information()
+            await self.fetch_settings()
+
+    async def set_dsr_enabled(self, enabled):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'dsr_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set dsr (grid assistance) enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_frost_protection_enabled(self, enabled):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'frost_protection_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set frost protection enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_distributed_computing_enabled(self, enabled):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'distributed_computing_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set distributed computing (medical research) enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_cleansing_temperature(self, value):
+
+        # Ensure values are within correct range
+        value = min(value, 55)
+        value = max(value, 51)
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'cleansing_temperature': value }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set cleansing temperature failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
 
     async def set_divert_exported_enabled(self, enabled):
 
@@ -92,6 +159,24 @@ class Tank:
 
             if resp.status != 200:
                 _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_pv_cut_in_threshold(self, value):
+
+        # Ensure values are within correct range
+        value = min(value, 500)
+        value = max(value, 0)
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'pv_cut_in_threshold': value }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set PV cut in threshold failed with status %i", self._control_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -110,6 +195,42 @@ class Tank:
 
             if resp.status != 200:
                 _LOGGER.error("Call to %s to set PV charge limit failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_pv_target_current(self, value):
+
+        # Ensure values are within correct range
+        value = min(value, 0)
+        value = max(value, -1)
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'pv_target_current': value }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set PV target current failed with status %i", self._control_url, resp.status)
+                return
+
+            await self.fetch_settings()
+
+    async def set_pv_over_temperature(self, value):
+
+        # Ensure values are within correct range
+        value = min(value, 60)
+        value = max(value, 45)
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'pv_over_temperature': value }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set PV over temperature failed with status %i", self._control_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -351,10 +472,17 @@ class Tank:
             _LOGGER.debug(json_object)
 
             self._target_temperature = json_object["max_temp"]
+            self._dsr_enabled = json_object["dsr_enabled"]
+            self._frost_protection_enabled = json_object["frost_protection_enabled"]
+            self._distributed_computing_enabled = json_object["distributed_computing_enabled"]
+            self._cleansing_temperature = json_object["cleansing_temperature"]
 
             try:
                 self._divert_exported_enabled = json_object["divert_exported_enabled"]
                 self._pv_charge_limit = json_object["pv_charge_limit"]
+                self._pv_cut_in_threshold = json_object["pv_cut_in_threshold"]
+                self._pv_target_current = json_object["pv_target_current"]
+                self._pv_over_temperature = json_object["pv_over_temperature"]
             except KeyError:
                 pass
 
@@ -423,13 +551,29 @@ class Tank:
         return self._target_temperature
 
     @property
+    def dsr_enabled(self):
+        return self._dsr_enabled
+
+    @property
+    def frost_protection_enabled(self):
+        return self._frost_protection_enabled
+
+    @property
+    def distributed_computing_enabled(self):
+        return self._distributed_computing_enabled
+
+    @property
+    def cleansing_temperature(self):
+        return self._cleansing_temperature
+
+    @property
     def pv_power(self):
         return self._pv_power
 
     @property
     def clamp_power(self):
         return self._clamp_power
-    
+
     @property
     def has_pv_diverter(self):
         return self._has_pv_diverter
@@ -439,5 +583,17 @@ class Tank:
         return self._divert_exported_enabled
 
     @property
+    def pv_cut_in_threshold(self):
+        return self._pv_cut_in_threshold
+
+    @property
     def pv_charge_limit(self):
         return self._pv_charge_limit
+
+    @property
+    def pv_target_current(self):
+        return self._pv_target_current
+
+    @property
+    def pv_over_temperature(self):
+        return self._pv_over_temperature
