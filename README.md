@@ -39,6 +39,8 @@ This integration offers two services:
 
 `mixergy.mixergy_set_charge` - It allows you to provide a target charge percentage.
 `mixergy.mixergy_set_target_temperature` - It allows you to set the target temperature of the water.
+`mixergy.mixergy_set_holiday_dates` - It allows you to set the holiday start and end dates.
+`mixergy.mixergy_clear_holiday_dates` - It allows you to clear the holiday dates.
 
 ![image](https://user-images.githubusercontent.com/302741/134326151-7e1583fe-f3b7-482f-82ab-016f2f662cb6.png)
 

@@ -25,3 +25,24 @@ mixergy_set_target_temperature:
         number:
           min: 45
           max: 70
+mixergy_set_holiday_dates:
+  name:  Set Holiday Dates
+  description: Sets the holiday start and end dates of your Mixergy tank.
+  fields:
+    start_date:
+      name: Start Date
+      description: Timestamp of the start date of the holiday period
+      example: "2024-03-15 16:00:00"
+      required: true
+      selector:
+        datetime:
+    end_date:
+      name: End Date
+      description: Timestamp of the end date of the holiday period
+      example: "2024-03-17 12:00:00"
+      required: true
+      selector:
+        datetime:
+mixergy_clear_holiday_dates:
+  name:  Clear Holiday Dates
+  description: Clears the holiday dates of your Mixergy tank.

@@ -36,6 +36,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(PVEnergySensor(tank))
     new_entities.append(ClampPowerSensor(coordinator, tank))
     new_entities.append(IsChargingSensor(coordinator, tank))
+    new_entities.append(HolidayStartDateSensor(coordinator, tank))
+    new_entities.append(HolidayEndDateSensor(coordinator, tank))
 
     async_add_entities(new_entities)
 
@@ -440,3 +442,43 @@ class HolidayModeSensor(BinarySensorBase):
     @property
     def name(self):
         return f"Holiday Mode"
+
+class HolidayStartDateSensor(SensorBase):
+
+    device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__(coordinator,tank)
+        self._state = None
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_holiday_date_start"
+
+    @property
+    def state(self):
+        return self._tank.holiday_date_start
+
+    @property
+    def name(self):
+        return f"Holiday Date Start"
+
+class HolidayEndDateSensor(SensorBase):
+
+    device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__(coordinator,tank)
+        self._state = None
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_holiday_date_end"
+
+    @property
+    def state(self):
+        return self._tank.holiday_date_end
+
+    @property
+    def name(self):
+        return f"Holiday Date End"
