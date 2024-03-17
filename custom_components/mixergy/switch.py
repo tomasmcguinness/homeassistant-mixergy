@@ -90,7 +90,7 @@ class DistributedComputingSwitch(SwitchEntityBase):
 
     @property
     def is_on(self):
-        return self._tank.dsr_enabled
+        return self._tank.distributed_computing_enabled
 
     async def async_turn_on(self, **kwargs):
         await self._tank.set_distributed_computing_enabled(True)
