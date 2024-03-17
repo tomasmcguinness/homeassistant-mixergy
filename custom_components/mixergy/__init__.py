@@ -31,12 +31,7 @@ async def async_setup(hass: HomeAssistant, config):
 
     hass.data[DOMAIN] = {}
 
-    hass.services.async_register(DOMAIN, 'demo', my_service)
-
     return True
-
-async def my_service(call: ServiceCall):
-    _LOGGER.info()
 
 async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
 
