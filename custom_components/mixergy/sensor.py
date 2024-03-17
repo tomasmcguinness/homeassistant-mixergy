@@ -385,10 +385,10 @@ class PVEnergySensor(IntegrationSensor):
     @property
     def icon(self):
         return "mdi:lightning-bolt"
-    
+
     @property
     def available(self):
-        return super().available and self._tank.has_pv_diverter
+        return self._tank.online and self._tank.has_pv_diverter
 
 class ClampPowerSensor(SensorBase):
 
