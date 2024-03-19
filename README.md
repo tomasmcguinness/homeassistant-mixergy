@@ -57,6 +57,6 @@ This integration is useful as it provides the state of your Mixergy tank via the
 * Get this component merged into the HomeAssistant core?
 * Update the Mixergy icon and support dark mode
 * ~~Get the Mixergy icon added, to improve the installation~~
-* Support *away* by controlling tank's holiday mode
+* ~~Support *away* by controlling tank's holiday mode~~
 
 
