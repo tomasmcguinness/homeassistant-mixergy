@@ -1,4 +1,4 @@
-from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE
+from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE, ATTR_START_DATE, ATTR_END_DATE, SERVICE_SET_HOLIDAY_DATES, SERVICE_CLEAR_HOLIDAY_DATES
 from datetime import timedelta
 import logging
 import asyncio
@@ -111,6 +111,38 @@ def _register_services(hass):
         if None not in results:
             _LOGGER.warning("The request to change the target temperature of the tank did not succeed")
 
+    async def mixergy_set_holiday_dates(call):
+
+        start_date = call.data[ATTR_START_DATE]
+        end_date = call.data[ATTR_END_DATE]
+
+        tasks = [
+            tank.set_holiday_dates(start_date, end_date)
+            for tank in [d["tank"] for d in hass.data[DOMAIN].values()]
+            if isinstance(tank, Tank)
+        ]
+
+        results = await asyncio.gather(*tasks)
+
+        # Note that we'll get a "None" value for a successful call
+        if None not in results:
+            _LOGGER.warning("The request to change the holiday dates of the tank did not succeed")
+
+    async def mixergy_clear_holiday_dates(call):
+
+        tasks = [
+            tank.clear_holiday_dates()
+            for tank in [d["tank"] for d in hass.data[DOMAIN].values()]
+            if isinstance(tank, Tank)
+        ]
+
+        results = await asyncio.gather(*tasks)
+
+        # Note that we'll get a "None" value for a successful call
+        if None not in results:
+            _LOGGER.warning("The request to clear the holiday dates of the tank did not succeed")
+
+
     if not hass.services.has_service(DOMAIN, SERVICE_SET_CHARGE):
         # Register a local handler for scene activation
         hass.services.async_register(
@@ -135,4 +167,26 @@ def _register_services(hass):
                     vol.Required(ATTR_TEMPERATURE): cv.positive_int
                 }
             ),
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SET_HOLIDAY_DATES):
+        # Register a local handler for scene activation
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_HOLIDAY_DATES,
+            verify_domain_control(hass, DOMAIN)(mixergy_set_holiday_dates),
+            schema=vol.Schema(
+                {
+                    vol.Required(ATTR_START_DATE): cv.datetime,
+                    vol.Required(ATTR_END_DATE): cv.datetime
+                }
+            ),
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_CLEAR_HOLIDAY_DATES):
+        # Register a local handler for scene activation
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_CLEAR_HOLIDAY_DATES,
+            verify_domain_control(hass, DOMAIN)(mixergy_clear_holiday_dates),
         )
