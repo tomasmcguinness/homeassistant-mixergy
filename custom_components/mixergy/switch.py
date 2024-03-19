@@ -11,14 +11,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     entry = hass.data[DOMAIN][config_entry.entry_id]
     tank = entry["tank"]
-    coordinator = entry["coordinator"]
 
     new_entities = []
 
-    new_entities.append(DSRSwitch(coordinator, tank))
-    new_entities.append(FrostProtectionSwitch(coordinator, tank))
-    new_entities.append(DistributedComputingSwitch(coordinator, tank))
-    new_entities.append(PVDivertSwitch(coordinator, tank))
+    new_entities.append(DSRSwitch(tank))
+    new_entities.append(FrostProtectionSwitch(tank))
+    new_entities.append(DistributedComputingSwitch(tank))
+    new_entities.append(PVDivertSwitch(tank))
 
     async_add_entities(new_entities)
 
@@ -26,13 +25,13 @@ class SwitchEntityBase(MixergyEntityBase, SwitchEntity):
 
     device_class = SwitchDeviceClass.SWITCH
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
 class DSRSwitch(SwitchEntityBase):
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -54,8 +53,8 @@ class DSRSwitch(SwitchEntityBase):
 
 class FrostProtectionSwitch(SwitchEntityBase):
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -77,8 +76,8 @@ class FrostProtectionSwitch(SwitchEntityBase):
 
 class DistributedComputingSwitch(SwitchEntityBase):
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -100,8 +99,8 @@ class DistributedComputingSwitch(SwitchEntityBase):
 
 class PVDivertSwitch(SwitchEntityBase):
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
