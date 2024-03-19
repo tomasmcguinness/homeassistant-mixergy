@@ -1,8 +1,6 @@
 import logging
 import asyncio
 import json
-from datetime import datetime
-from typing import Optional
 from homeassistant.helpers import aiohttp_client
 from .const import ATTR_CHARGE
 
@@ -52,7 +50,6 @@ class Tank:
         self._pv_charge_limit = 0
         self._pv_target_current = 0
         self._pv_over_temperature = 0
-        self._schedule = None
 
     @property
     def tank_id(self):
@@ -341,7 +338,6 @@ class Tank:
                 self._latest_measurement_url = tank_url_result["_links"]["latest_measurement"]["href"]
                 self._control_url = tank_url_result["_links"]["control"]["href"]
                 self._settings_url = tank_url_result["_links"]["settings"]["href"]
-                self._schedule_url = tank_url_result["_links"]["schedule"]["href"]
 
                 self.modelCode = tank_url_result["tankModelCode"]
 
@@ -352,7 +348,6 @@ class Tank:
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
                 _LOGGER.debug("Control URL is %s", self._control_url)
                 _LOGGER.debug("Settings URL is %s", self._settings_url)
-                _LOGGER.debug("Schedule URL is %s", self._schedule_url)
 
                 return True
 
@@ -491,75 +486,6 @@ class Tank:
             except KeyError:
                 pass
 
-    async def fetch_schedule(self):
-
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.get(self._schedule_url, headers=headers) as resp:
-
-            if resp.status != 200:
-                _LOGGER.info("Fetch of the schedule %s failed with status %i", self._schedule_url, resp.status)
-                return
-
-            # The schedule API returns text/plain as the content-type, so using the resp.json() fails.
-            # Load it as a bit of JSON via the text.
-            response_text = await resp.text()
-            json_object = json.loads(response_text)
-            _LOGGER.debug(json_object)
-
-            self._schedule = json_object
-
-    async def set_schedule(self, value):
-
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._schedule_url, headers=headers, json=value) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set schedule failed with status %i", self._schedule_url, resp.status)
-                return
-
-            await self.fetch_schedule()
-
-    async def set_holiday_dates(self, start_date: datetime, end_date: datetime):
-
-        await self.fetch_schedule()
-
-        schedule = self._schedule
-
-        if schedule == None:
-            _LOGGER.error("Tried to set holiday dates but no schedule to set")
-            return
-
-        schedule["holiday"] = {
-            "departDate": int(start_date.timestamp()) * 1000,
-            "returnDate": int(end_date.timestamp()) * 1000
-        }
-
-        await self.set_schedule(schedule)
-
-        await self.publish_updates()
-
-    async def clear_holiday_dates(self):
-
-        await self.fetch_schedule()
-
-        schedule = self._schedule
-
-        if schedule == None:
-            _LOGGER.error("Tried to clear holiday dates but no schedule to set")
-            return
-
-        schedule.pop("holiday", None)
-
-        await self.set_schedule(schedule)
-
-        await self.publish_updates()
-
     async def fetch_data(self):
 
         _LOGGER.info('Fetching data....')
@@ -571,8 +497,6 @@ class Tank:
         await self.fetch_last_measurement()
 
         await self.fetch_settings()
-
-        await self.fetch_schedule()
 
         await self.publish_updates()
 
@@ -673,21 +597,3 @@ class Tank:
     @property
     def pv_over_temperature(self):
         return self._pv_over_temperature
-
-    @property
-    def holiday_date_start(self) -> Optional[datetime]:
-        try:
-            return datetime.fromtimestamp(self._schedule["holiday"]["departDate"] / 1000)
-        except KeyError:
-            return None
-        except TypeError:
-            return None
-
-    @property
-    def holiday_date_end(self) -> Optional[datetime]:
-        try:
-            return datetime.fromtimestamp(self._schedule["holiday"]["returnDate"] / 1000)
-        except KeyError:
-            return None
-        except TypeError:
-            return None
