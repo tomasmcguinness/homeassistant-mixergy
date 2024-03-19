@@ -60,7 +60,7 @@ class Tank:
 
     async def test_connection(self):
         return await self.fetch_tank_information()
-
+    
     async def set_target_charge(self, charge):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
@@ -84,7 +84,7 @@ class Tank:
         async with session.put(self._settings_url, headers=headers, json={'max_temp': temperature }) as resp:
 
             if resp.status != 200:
-                _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._control_url, resp.status)
+                _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._settings_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -98,7 +98,7 @@ class Tank:
         async with session.put(self._settings_url, headers=headers, json={'dsr_enabled': enabled }) as resp:
 
             if resp.status != 200:
-                _LOGGER.error("Call to %s to set dsr (grid assistance) enabled failed with status %i", self._control_url, resp.status)
+                _LOGGER.error("Call to %s to set dsr (grid assistance) enabled failed with status %i", self._settings_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -112,7 +112,7 @@ class Tank:
         async with session.put(self._settings_url, headers=headers, json={'frost_protection_enabled': enabled }) as resp:
 
             if resp.status != 200:
-                _LOGGER.error("Call to %s to set frost protection enabled failed with status %i", self._control_url, resp.status)
+                _LOGGER.error("Call to %s to set frost protection enabled failed with status %i", self._settings_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -126,7 +126,7 @@ class Tank:
         async with session.put(self._settings_url, headers=headers, json={'distributed_computing_enabled': enabled }) as resp:
 
             if resp.status != 200:
-                _LOGGER.error("Call to %s to set distributed computing (medical research) enabled failed with status %i", self._control_url, resp.status)
+                _LOGGER.error("Call to %s to set distributed computing (medical research) enabled failed with status %i", self._settings_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -144,7 +144,7 @@ class Tank:
         async with session.put(self._settings_url, headers=headers, json={'cleansing_temperature': value }) as resp:
 
             if resp.status != 200:
-                _LOGGER.error("Call to %s to set cleansing temperature failed with status %i", self._control_url, resp.status)
+                _LOGGER.error("Call to %s to set cleansing temperature failed with status %i", self._settings_url, resp.status)
                 return
 
             await self.fetch_settings()
@@ -158,7 +158,7 @@ class Tank:
         async with session.put(self._settings_url, headers=headers, json={'divert_exported_enabled': enabled }) as resp:
 
             if resp.status != 200:
-                _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._control_url, resp.status)
+                _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._settings_url, resp.status)
                 return
 
             await self.fetch_settings()
