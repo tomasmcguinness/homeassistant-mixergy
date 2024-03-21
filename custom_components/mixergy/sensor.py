@@ -383,6 +383,7 @@ class PVEnergySensor(IntegrationSensor):
             integration_method="left",
             unique_id=f"mixergy_{tank.tank_id}_pv_energy"
         )
+        self._tank = tank
 
     @property
     def icon(self):
