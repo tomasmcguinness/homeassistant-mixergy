@@ -14,6 +14,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     new_entities = []
 
+    new_entities.append(MaintainTargetTemperatureSwitch(tank))
     new_entities.append(DSRSwitch(tank))
     new_entities.append(FrostProtectionSwitch(tank))
     new_entities.append(DistributedComputingSwitch(tank))
@@ -27,6 +28,29 @@ class SwitchEntityBase(MixergyEntityBase, SwitchEntity):
 
     def __init__(self, tank:Tank):
         super().__init__(tank)
+
+class MaintainTargetTemperatureSwitch(SwitchEntityBase):
+
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_target_temperature_control_enabled"
+
+    @property
+    def name(self):
+        return f"Maintain Target Temperature Enabled"
+
+    @property
+    def is_on(self):
+        return self._tank.target_temperature_control_enabled
+
+    async def async_turn_on(self, **kwargs):
+        await self._tank.set_target_temperature_control_enabled(True)
+
+    async def async_turn_off(self, **kwargs):
+        await self._tank.set_target_temperature_control_enabled(False)
 
 class DSRSwitch(SwitchEntityBase):
 

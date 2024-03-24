@@ -60,6 +60,7 @@ class Tank:
         self._electric_heat_source = False
         self._heatpump_heat_source = False
         self._target_temperature = -1
+        self._target_temperature_control_enabled = False
         self._dsr_enabled = False
         self._frost_protection_enabled = False
         self._distributed_computing_enabled = False
@@ -117,6 +118,20 @@ class Tank:
 
             if resp.status != 200:
                 _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._settings_url, resp.status)
+                return
+
+            await self._fetch_settings()
+
+    async def set_target_temperature_control_enabled(self, enabled):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'target_temperature_control_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set maintain target temperature enabled failed with status %i", self._settings_url, resp.status)
                 return
 
             await self._fetch_settings()
@@ -618,6 +633,7 @@ class Tank:
         _LOGGER.debug(json_object)
 
         self._target_temperature = json_object["max_temp"]
+        self._target_temperature_control_enabled = json_object["target_temperature_control_enabled"]
         self._dsr_enabled = json_object["dsr_enabled"]
         self._frost_protection_enabled = json_object["frost_protection_enabled"]
         self._distributed_computing_enabled = json_object["distributed_computing_enabled"]
@@ -774,6 +790,10 @@ class Tank:
     @property
     def target_temperature(self):
         return self._target_temperature
+
+    @property
+    def target_temperature_control_enabled(self):
+        return self._target_temperature_control_enabled
 
     @property
     def dsr_enabled(self):
