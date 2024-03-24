@@ -37,19 +37,13 @@ async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
 
     """Set up a tank from a config entry."""
 
-    tank = Tank(hass, entry.data[CONF_USERNAME],entry.data[CONF_PASSWORD],entry.data["serial_number"])
+    tank = Tank(hass, entry.data[CONF_USERNAME], entry.data[CONF_PASSWORD], entry.data["serial_number"])
 
-    async def async_update_data():
-        _LOGGER.info("Fetching data from Mixergy...")
-        await tank.fetch_data()
-
-    # Create a coordinator to fetch data from the Mixergy API.
-    coordinator = DataUpdateCoordinator(hass, _LOGGER, name="Mixergy", update_method = async_update_data, update_interval = timedelta(seconds=30))
-    await coordinator.async_config_entry_first_refresh()
+    await tank.fetch_data()
+    tank.start()
 
     hass.data[DOMAIN][entry.entry_id] = {
         "tank": tank,
-        "coordinator": coordinator,
     }
 
     _register_services(hass)
@@ -60,6 +54,9 @@ async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
+
+    tank = hass.data[DOMAIN][entry.entry_id]["tank"]
+    tank.stop()
 
     unload_ok = all(
         await asyncio.gather(

@@ -12,24 +12,23 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     entry = hass.data[DOMAIN][config_entry.entry_id]
     tank = entry["tank"]
-    coordinator = entry["coordinator"]
 
     new_entities = []
 
-    new_entities.append(TargetTemperatureSensor(coordinator, tank))
-    new_entities.append(TargetChargeSensor(coordinator, tank))
-    new_entities.append(CleansingTemperatureSensor(coordinator, tank))
-    new_entities.append(PVCutInThreshold(coordinator, tank))
-    new_entities.append(PVChargeLimitSensor(coordinator, tank))
-    new_entities.append(PVTargetCurrent(coordinator, tank))
-    new_entities.append(PVOverTemperature(coordinator, tank))
+    new_entities.append(TargetTemperatureSensor(tank))
+    new_entities.append(TargetChargeSensor(tank))
+    new_entities.append(CleansingTemperatureSensor(tank))
+    new_entities.append(PVCutInThreshold(tank))
+    new_entities.append(PVChargeLimitSensor(tank))
+    new_entities.append(PVTargetCurrent(tank))
+    new_entities.append(PVOverTemperature(tank))
 
     async_add_entities(new_entities)
 
 class NumberEntityBase(MixergyEntityBase, NumberEntity):
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
 class TargetTemperatureSensor(NumberEntityBase):
 
@@ -39,8 +38,8 @@ class TargetTemperatureSensor(NumberEntityBase):
     device_class = NumberDeviceClass.TEMPERATURE
     native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__( coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -64,8 +63,8 @@ class TargetChargeSensor(NumberEntityBase):
     native_step = 1
     native_unit_of_measurement = PERCENTAGE
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -94,8 +93,8 @@ class CleansingTemperatureSensor(NumberEntityBase):
     device_class = NumberDeviceClass.TEMPERATURE
     native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__( coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -118,8 +117,8 @@ class PVCutInThreshold(NumberEntityBase):
     native_min_value = 0
     native_step = 50
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -150,8 +149,8 @@ class PVChargeLimitSensor(NumberEntityBase):
     native_min_value = 0
     native_step = 10
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -182,8 +181,8 @@ class PVTargetCurrent(NumberEntityBase):
     native_min_value = -1
     native_step = 0.1
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
@@ -214,8 +213,8 @@ class PVOverTemperature(NumberEntityBase):
     native_min_value = 45
     native_step = 1
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator, tank)
+    def __init__(self, tank:Tank):
+        super().__init__(tank)
 
     @property
     def unique_id(self):
