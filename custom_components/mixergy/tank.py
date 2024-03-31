@@ -347,7 +347,8 @@ class Tank:
 
             try:
                 headers = {'Token': self._token}
-                stomp_conn.connect(wait=True, headers=headers, with_connect_command=True)
+                stomp_conn.connect(headers=headers, with_connect_command=True)
+                stomp_conn.transport.wait_for_connection(timeout=60)
                 _LOGGER.debug("STOMP connected")
 
                 topic = f'/topic/tank/{self._uuid}/poll'
