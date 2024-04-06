@@ -361,6 +361,10 @@ class Tank:
                 _LOGGER.error("Failed to connect to Mixergy STOMP server")
                 self._hass.loop.call_later(STOMP_RETRY_TIMER, self._start_connection)
 
+            except Exception as e:
+                _LOGGER.error(f"Unexpected exception connecting to Mixergy STOMP server:\n{e}")
+                self._hass.loop.call_later(STOMP_RETRY_TIMER, self._start_connection)
+
             self._stomp_conn = stomp_conn
 
         self._stomp_conn_task = self._hass.loop.create_task(_connection_runner())
