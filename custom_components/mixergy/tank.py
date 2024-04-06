@@ -299,7 +299,9 @@ class Tank:
         async def _connection_runner() -> None:
             _LOGGER.debug("STOMP starting connection")
 
-            await self._authenticate()
+            # Fetch data before connecting so that we have an up-to-date state
+            # since the STOMP connection will only give us changes.
+            await self.fetch_data()
 
             host_tuples = [(STOMP_ENDPOINT, 443)]
             stomp_conn = stomp.WSConnection(host_tuples, ws_path=STOMP_WS_PATH)
