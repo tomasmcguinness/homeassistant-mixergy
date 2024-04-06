@@ -313,7 +313,7 @@ class Tank:
 
                 def on_disconnected(self):
                     _LOGGER.debug("STOMP connection: on_disconnected")
-                    self._stomp_conn = None
+                    self._tank._stomp_conn = None
                     self._tank._hass.loop.call_later(STOMP_RETRY_TIMER, self._tank._start_connection)
 
                 def on_message(self, frame):
