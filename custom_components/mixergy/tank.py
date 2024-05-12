@@ -347,7 +347,10 @@ class Tank:
 
                 tank_configuration_json = tank_url_result["configuration"]
                 tank_configuration = json.loads(tank_configuration_json)
-                self._has_pv_diverter = (tank_configuration["mixergyPvType"] != "NO_INVERTER")
+                
+                # Some tanks do not return a mixergyPvType - so force to NO_INVERTER
+                tank_configuration_pvtype = tank_configuration.get("mixergyPvType", "NO_INVERTER")
+                self._has_pv_diverter = (tank_configuration_pvtype != "NO_INVERTER")
 
                 _LOGGER.debug("Measurement URL is %s", self._latest_measurement_url)
                 _LOGGER.debug("Control URL is %s", self._control_url)
