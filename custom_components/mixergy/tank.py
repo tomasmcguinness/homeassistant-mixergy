@@ -1,14 +1,19 @@
 import logging
 import asyncio
 import json
+import stomp
 from datetime import datetime
 from typing import Optional
+from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client
 from .const import ATTR_CHARGE
 
 _LOGGER = logging.getLogger(__name__)
 
 ROOT_ENDPOINT = "https://www.mixergy.io/api/v2"
+STOMP_ENDPOINT = "www.mixergy.io"
+STOMP_WS_PATH = "/api/v1/stomp"
+STOMP_RETRY_TIMER = 15
 
 class TankUrls:
     def __init__(self, account_url):
@@ -19,13 +24,34 @@ class Tank:
     manufacturer = "Mixergy Ltd"
 
     def __init__(self, hass, username, password, serial_number):
-        self._id = serial_number.lower()
+        self._hass = hass
+
+        # Internal data
+        self._callbacks = set()
+        self._loop = asyncio.get_event_loop()
+        self._should_connect = False
+        self._stomp_conn: stomp.WSConnection | None = None
+        self._stomp_conn_task: asyncio.Task | None = None
+
+        # Parameters
         self.username = username
         self.password = password
         self.serial_number = serial_number.upper()
-        self._hass = hass
-        self._callbacks = set()
-        self._loop = asyncio.get_event_loop()
+
+        # URLs
+        self._latest_measurement_url = ""
+        self._control_url = ""
+        self._settings_url = ""
+        self._schedule_url = ""
+
+        # Tank informatiom
+        self._id = serial_number.lower()
+        self._model_code = ""
+        self._firmware_version = "0.0.0"
+        self._uuid = ""
+        self._token = ""
+
+        # Tank settings
         self._hot_water_temperature = -1
         self._coldest_water_temperature = -1
         self._charge = -1
@@ -33,12 +59,8 @@ class Tank:
         self._indirect_heat_source = False
         self._electric_heat_source = False
         self._heatpump_heat_source = False
-        self._hasFetched = False
-        self._token = ""
-        self._latest_measurement_url = ""
-        self.model = ""
-        self.firmware_version = "0.0.0"
         self._target_temperature = -1
+        self._target_temperature_control_enabled = False
         self._dsr_enabled = False
         self._frost_protection_enabled = False
         self._distributed_computing_enabled = False
@@ -58,11 +80,19 @@ class Tank:
     def tank_id(self):
         return self._id
 
+    @property
+    def model_code(self):
+        return self._model_code
+
+    @property
+    def firmware_version(self):
+        return self._firmware_version
+
     async def test_authentication(self):
-        return await self.authenticate()
+        return await self._authenticate()
 
     async def test_connection(self):
-        return await self.fetch_tank_information()
+        return await self._fetch_tank_information()
     
     async def set_target_charge(self, charge):
 
@@ -76,7 +106,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set the desired charge failed with status %i", self._control_url, resp.status)
                 return
 
-            await self.fetch_last_measurement()
+            await self._fetch_last_measurement()
 
     async def set_target_temperature(self, temperature):
 
@@ -90,7 +120,21 @@ class Tank:
                 _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._settings_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
+
+    async def set_target_temperature_control_enabled(self, enabled):
+
+        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+
+        headers = {'Authorization': f'Bearer {self._token}'}
+
+        async with session.put(self._settings_url, headers=headers, json={'target_temperature_control_enabled': enabled }) as resp:
+
+            if resp.status != 200:
+                _LOGGER.error("Call to %s to set maintain target temperature enabled failed with status %i", self._settings_url, resp.status)
+                return
+
+            await self._fetch_settings()
 
     async def set_dsr_enabled(self, enabled):
 
@@ -104,7 +148,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set dsr (grid assistance) enabled failed with status %i", self._settings_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_frost_protection_enabled(self, enabled):
 
@@ -118,7 +162,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set frost protection enabled failed with status %i", self._settings_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_distributed_computing_enabled(self, enabled):
 
@@ -132,7 +176,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set distributed computing (medical research) enabled failed with status %i", self._settings_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_cleansing_temperature(self, value):
 
@@ -150,7 +194,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set cleansing temperature failed with status %i", self._settings_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_divert_exported_enabled(self, enabled):
 
@@ -164,7 +208,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._settings_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_pv_cut_in_threshold(self, value):
 
@@ -182,7 +226,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set PV cut in threshold failed with status %i", self._control_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_pv_charge_limit(self, value):
 
@@ -200,7 +244,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set PV charge limit failed with status %i", self._control_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_pv_target_current(self, value):
 
@@ -218,7 +262,7 @@ class Tank:
                 _LOGGER.error("Call to %s to set PV target current failed with status %i", self._control_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
     async def set_pv_over_temperature(self, value):
 
@@ -236,13 +280,113 @@ class Tank:
                 _LOGGER.error("Call to %s to set PV over temperature failed with status %i", self._control_url, resp.status)
                 return
 
-            await self.fetch_settings()
+            await self._fetch_settings()
 
-    async def authenticate(self):
+    @callback
+    def start(self):
+
+        self._should_connect = True
+
+        self._start_connection()
+
+    @callback
+    def _start_connection(self):
+
+        if not self._should_connect:
+            _LOGGER.debug("Not starting STOMP connection")
+            return
+
+        async def _connection_runner() -> None:
+            _LOGGER.debug("STOMP starting connection")
+
+            # Fetch data before connecting so that we have an up-to-date state
+            # since the STOMP connection will only give us changes.
+            await self.fetch_data()
+
+            host_tuples = [(STOMP_ENDPOINT, 443)]
+            stomp_conn = stomp.WSConnection(host_tuples, ws_path=STOMP_WS_PATH)
+            stomp_conn.set_ssl(host_tuples)
+
+            class StompListener(stomp.listener.ConnectionListener):
+                def __init__(self, tank: Tank):
+                    self._tank = tank
+
+                def on_disconnected(self):
+                    _LOGGER.debug("STOMP connection: on_disconnected")
+                    self._stomp_conn = None
+                    self._tank._hass.loop.call_later(STOMP_RETRY_TIMER, self._tank._start_connection)
+
+                def on_message(self, frame):
+                    _LOGGER.debug("STOMP connection: on_message")
+                    _LOGGER.debug(frame.body)
+
+                    message = json.loads(frame.body)
+                    type = message["type"]
+                    payload = message["payload"]
+
+                    if type == "Measurement":
+                        self._tank._update_from_latest_measurement(payload)
+
+                    elif type == "Event":
+                        event = payload["event"]
+
+                        if event == "Settings":
+                            additional = json.loads(payload["additional"])
+                            self._tank._update_from_new_settings(additional)
+
+                        elif event == "Schedule":
+                            additional = json.loads(payload["additional"])
+                            self._tank._update_from_new_schedule(additional)
+
+                        elif event == "State":
+                            additional = json.loads(payload["additional"])
+                            self._tank._update_from_new_state(additional)
+
+                    self._tank._hass.loop.create_task(self._tank._publish_updates())
+
+            listener = StompListener(self)
+            stomp_conn.set_listener("listener", listener)
+
+            try:
+                headers = {'Token': self._token}
+                stomp_conn.connect(headers=headers, with_connect_command=True)
+                stomp_conn.transport.wait_for_connection(timeout=60)
+                _LOGGER.debug("STOMP connected")
+
+                topic = f'/topic/tank/{self._uuid}/poll'
+                stomp_conn.subscribe(destination=topic, id=self._id, ack="auto")
+                _LOGGER.debug(f"STOMP subscribed to {topic}")
+
+            except stomp.exception.ConnectFailedException:
+                _LOGGER.error("Failed to connect to Mixergy STOMP server")
+                self._hass.loop.call_later(STOMP_RETRY_TIMER, self._start_connection)
+
+            except Exception as e:
+                _LOGGER.error(f"Unexpected exception connecting to Mixergy STOMP server:\n{e}")
+                self._hass.loop.call_later(STOMP_RETRY_TIMER, self._start_connection)
+
+            self._stomp_conn = stomp_conn
+
+        self._stomp_conn_task = self._hass.loop.create_task(_connection_runner())
+
+    @callback
+    def stop(self):
+
+        _LOGGER.debug("STOMP stopping connection")
+
+        self._should_connect = False
+
+        if self._stomp_conn_task is not None:
+            self._stomp_conn_task.cancel()
+
+        if self._stomp_conn is not None:
+            self._stomp_conn.disconnect()
+
+    async def _authenticate(self):
 
         if self._token:
             _LOGGER.info("Authentication token is valid")
-            return
+            return True
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
@@ -279,9 +423,10 @@ class Tank:
             login_result = await resp.json()
             token = login_result['token']
             self._token = token
+
             return True
 
-    async def fetch_tank_information(self):
+    async def _fetch_tank_information(self):
 
         if self._latest_measurement_url:
             _LOGGER.info("Tank information has already been fetched")
@@ -326,7 +471,6 @@ class Tank:
                 return False
 
             tank_url = tank["_links"]["self"]["href"]
-            self.firmwareVersion = tank["firmwareVersion"]
 
             async with session.get(tank_url, headers=headers) as resp:
 
@@ -343,7 +487,9 @@ class Tank:
                 self._settings_url = tank_url_result["_links"]["settings"]["href"]
                 self._schedule_url = tank_url_result["_links"]["schedule"]["href"]
 
-                self.modelCode = tank_url_result["tankModelCode"]
+                self._uuid = tank_url_result["id"]
+                self._model_code = tank_url_result["tankModelCode"]
+                self._firmware_version = tank_url_result["firmwareVersion"]
 
                 tank_configuration_json = tank_url_result["configuration"]
                 tank_configuration = json.loads(tank_configuration_json)
@@ -359,7 +505,7 @@ class Tank:
 
                 return True
 
-    async def fetch_last_measurement(self):
+    async def _fetch_last_measurement(self, publish = False):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
@@ -372,96 +518,106 @@ class Tank:
                 return
 
             tank_result = await resp.json()
-            _LOGGER.debug(tank_result)
+            self._update_from_latest_measurement(tank_result)
 
-            self._hot_water_temperature = tank_result["topTemperature"]
-            self._coldest_water_temperature = tank_result["bottomTemperature"]
+            if publish:
+                await self._publish_updates
 
-            if "pvEnergy" in tank_result:
-                self._pv_power = tank_result["pvEnergy"] / 60000
-            else:
-                self._pv_power = 0
+    def _update_from_latest_measurement(self, tank_result):
 
-            if "clampPower" in tank_result:
-                self._clamp_power = tank_result["clampPower"]
-            else:
-                self._clamp_power = 0
+        _LOGGER.debug("Updating with latest measurement data:")
+        _LOGGER.debug(tank_result)
 
-            new_charge = tank_result["charge"]
+        self._hot_water_temperature = tank_result["topTemperature"]
+        self._coldest_water_temperature = tank_result["bottomTemperature"]
 
-            _LOGGER.debug("Current: %f", self._charge)
-            _LOGGER.debug("New: %f", new_charge)
+        if "pvEnergy" in tank_result:
+            self._pv_power = tank_result["pvEnergy"] / 60000
+        else:
+            self._pv_power = 0
 
-            if new_charge != self._charge:
-                _LOGGER.debug('Sending charge_changed event')
+        if "clampPower" in tank_result:
+            self._clamp_power = tank_result["clampPower"]
+        else:
+            self._clamp_power = 0
 
-                event_data = {
-                    "device_id": self._id,
-                    "type": "charge_changed",
-                    "charge" : new_charge
-                }
+        new_charge = tank_result["charge"]
 
-                self._hass.bus.async_fire("mixergy_event", event_data)
+        _LOGGER.debug("Current: %f", self._charge)
+        _LOGGER.debug("New: %f", new_charge)
 
-            self._charge = new_charge
+        if new_charge != self._charge:
+            _LOGGER.debug('Sending charge_changed event')
 
-            # Fetch information about the current state of the heating.
+            event_data = {
+                "device_id": self._id,
+                "type": "charge_changed",
+                "charge" : new_charge
+            }
 
-            state = json.loads(tank_result["state"])
+            self._hass.bus.async_fire("mixergy_event", event_data)
 
-            current = state["current"]
+        self._charge = new_charge
 
+        # Fetch information about the current state of the heating.
+        state = json.loads(tank_result["state"])
+        self._update_from_new_state(state)
+
+    def _update_from_new_state(self, state):
+
+        current = state["current"]
+
+        new_target_charge = 0
+
+        if "target" in current:
+            new_target_charge = current["target"]
+        else:
             new_target_charge = 0
 
-            if "target" in current:
-                new_target_charge = current["target"]
-            else:
-                new_target_charge = 0
+        self._target_charge = new_target_charge
 
-            self._target_charge = new_target_charge
+        vacation = False
 
-            vacation = False
+        # Source is only present when vacation is enabled it seems
+        if "source" in current:
+            source = current["source"]
+            vacation = source == "Vacation"
 
-            # Source is only present when vacation is enabled it seems
-            if "source" in current:
-                source = current["source"]
-                vacation = source == "Vacation"
+        if vacation:
+            self._in_holiday_mode = True
 
-            if vacation:
-                self._in_holiday_mode = True
+            # Assume it's all off as the tank is in holiday mode
+            self._electric_heat_source = False
+            self._heatpump_heat_source = False
+            self._indirect_heat_source = False
 
-                # Assume it's all off as the tank is in holiday mode
+        else:
+            self._in_holiday_mode = False
+
+            heat_source = current["heat_source"].lower()
+            heat_source_on = current["immersion"].lower() == "on"
+
+            if heat_source == "indirect":
                 self._electric_heat_source = False
                 self._heatpump_heat_source = False
+                self._indirect_heat_source = heat_source_on
+
+            elif heat_source == "electric":
+                self._electric_heat_source = heat_source_on
                 self._indirect_heat_source = False
+                self._heatpump_heat_source = False
+
+            elif heat_source == "heatpump":
+                self._heatpump_heat_source = heat_source_on
+                self._indirect_heat_source = False
+                self._electric_heat_source = False
 
             else:
-                self._in_holiday_mode = False
+                self._indirect_heat_source = False
+                self._electric_heat_source = False
+                self._heatpump_heat_source = False
 
-                heat_source = current["heat_source"].lower()
-                heat_source_on = current["immersion"].lower() == "on"
-
-                if heat_source == "indirect":
-                    self._electric_heat_source = False
-                    self._heatpump_heat_source = False
-                    self._indirect_heat_source = heat_source_on
-
-                elif heat_source == "electric":
-                    self._electric_heat_source = heat_source_on
-                    self._indirect_heat_source = False
-                    self._heatpump_heat_source = False
-
-                elif heat_source == "heatpump":
-                    self._heatpump_heat_source = heat_source_on
-                    self._indirect_heat_source = False
-                    self._electric_heat_source = False
-
-                else:
-                    self._indirect_heat_source = False
-                    self._electric_heat_source = False
-                    self._heatpump_heat_source = False
-
-    async def fetch_settings(self):
+    async def _fetch_settings(self, publish = False):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
@@ -477,24 +633,33 @@ class Tank:
             # Load it as a bit of JSON via the text.
             response_text = await resp.text()
             json_object = json.loads(response_text)
-            _LOGGER.debug(json_object)
+            self._update_from_new_settings(json_object)
 
-            self._target_temperature = json_object["max_temp"]
-            self._dsr_enabled = json_object["dsr_enabled"]
-            self._frost_protection_enabled = json_object["frost_protection_enabled"]
-            self._distributed_computing_enabled = json_object["distributed_computing_enabled"]
-            self._cleansing_temperature = json_object["cleansing_temperature"]
+            if publish:
+                await self._publish_updates
 
-            try:
-                self._divert_exported_enabled = json_object["divert_exported_enabled"]
-                self._pv_charge_limit = json_object["pv_charge_limit"]
-                self._pv_cut_in_threshold = json_object["pv_cut_in_threshold"]
-                self._pv_target_current = json_object["pv_target_current"]
-                self._pv_over_temperature = json_object["pv_over_temperature"]
-            except KeyError:
-                pass
+    def _update_from_new_settings(self, json_object):
 
-    async def fetch_schedule(self):
+        _LOGGER.debug("Updating with new settings:")
+        _LOGGER.debug(json_object)
+
+        self._target_temperature = json_object["max_temp"]
+        self._target_temperature_control_enabled = json_object["target_temperature_control_enabled"]
+        self._dsr_enabled = json_object["dsr_enabled"]
+        self._frost_protection_enabled = json_object["frost_protection_enabled"]
+        self._distributed_computing_enabled = json_object["distributed_computing_enabled"]
+        self._cleansing_temperature = json_object["cleansing_temperature"]
+
+        try:
+            self._divert_exported_enabled = json_object["divert_exported_enabled"]
+            self._pv_charge_limit = json_object["pv_charge_limit"]
+            self._pv_cut_in_threshold = json_object["pv_cut_in_threshold"]
+            self._pv_target_current = json_object["pv_target_current"]
+            self._pv_over_temperature = json_object["pv_over_temperature"]
+        except KeyError:
+            pass
+
+    async def _fetch_schedule(self, publish = False):
 
         session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
 
@@ -510,6 +675,14 @@ class Tank:
             # Load it as a bit of JSON via the text.
             response_text = await resp.text()
             json_object = json.loads(response_text)
+            self._update_from_new_schedule(json_object)
+
+            if publish:
+                await self._publish_updates
+
+    def _update_from_new_schedule(self, json_object):
+
+            _LOGGER.debug("Updating with new schedule:")
             _LOGGER.debug(json_object)
 
             self._schedule = json_object
@@ -526,11 +699,11 @@ class Tank:
                 _LOGGER.error("Call to %s to set schedule failed with status %i", self._schedule_url, resp.status)
                 return
 
-            await self.fetch_schedule()
+            await self._fetch_schedule()
 
     async def set_holiday_dates(self, start_date: datetime, end_date: datetime):
 
-        await self.fetch_schedule()
+        await self._fetch_schedule()
 
         schedule = self._schedule
 
@@ -545,11 +718,11 @@ class Tank:
 
         await self.set_schedule(schedule)
 
-        await self.publish_updates()
+        await self._publish_updates()
 
     async def clear_holiday_dates(self):
 
-        await self.fetch_schedule()
+        await self._fetch_schedule()
 
         schedule = self._schedule
 
@@ -561,23 +734,23 @@ class Tank:
 
         await self.set_schedule(schedule)
 
-        await self.publish_updates()
+        await self._publish_updates()
 
     async def fetch_data(self):
 
         _LOGGER.info('Fetching data....')
 
-        await self.authenticate()
+        await self._authenticate()
 
-        await self.fetch_tank_information()
+        await self._fetch_tank_information()
 
-        await self.fetch_last_measurement()
+        await self._fetch_last_measurement()
 
-        await self.fetch_settings()
+        await self._fetch_settings()
 
-        await self.fetch_schedule()
+        await self._fetch_schedule()
 
-        await self.publish_updates()
+        await self._publish_updates()
 
     def register_callback(self, callback):
         self._callbacks.add(callback)
@@ -585,7 +758,7 @@ class Tank:
     def remove_callback(self, callback):
         self._callbacks.discard(callback)
 
-    async def publish_updates(self):
+    async def _publish_updates(self):
         for callback in self._callbacks:
             callback()
 
@@ -628,6 +801,10 @@ class Tank:
     @property
     def target_temperature(self):
         return self._target_temperature
+
+    @property
+    def target_temperature_control_enabled(self):
+        return self._target_temperature_control_enabled
 
     @property
     def dsr_enabled(self):
