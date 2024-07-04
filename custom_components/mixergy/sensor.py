@@ -335,7 +335,8 @@ class EnergySensor(IntegrationSensor):
             unit_prefix="k",
             unit_time="h",
             integration_method="left",
-            unique_id=f"mixergy_{tank.tank_id}_energy"
+            unique_id=f"mixergy_{tank.tank_id}_energy",
+            max_sub_interval=None
         )
 
     @property
@@ -381,7 +382,8 @@ class PVEnergySensor(IntegrationSensor):
             unit_prefix=None, # PVPowerSensor is already in kW
             unit_time="h",
             integration_method="left",
-            unique_id=f"mixergy_{tank.tank_id}_pv_energy"
+            unique_id=f"mixergy_{tank.tank_id}_pv_energy",
+            max_sub_interval=None
         )
         self._tank = tank
 
