@@ -6,8 +6,10 @@
     "dependencies": ["integration"],
     "documentation": "https://github.com/tomasmcguinness/homeassistant-mixergy",
     "integration_type": "device",
-    "iot_class": "cloud_polling",
+    "iot_class": "cloud_push",
     "issue_tracker": "https://github.com/tomasmcguinness/homeassistant-mixergy/issues",
-    "requirements": [],
+    "requirements": [
+        "stomp.py"
+    ],
     "version": "0.3.4"
   }
