@@ -46,3 +46,19 @@ mixergy_set_holiday_dates:
 mixergy_clear_holiday_dates:
   name:  Clear Holiday Dates
   description: Clears the holiday dates of your Mixergy tank.
+mixergy_set_default_heat_source:
+  name: Set Default Heat Source
+  description: Sets the default heat source of the Mixergy tank.
+  fields:
+    heat_source:
+      name: Heat Source
+      description: The heat source of your Mixergy tank
+      example: indirect
+      required: true
+      selector:
+        select:
+          translation_key: "heat_source"
+          options:
+            - "electric"
+            - "indirect"
+            - "heat_pump"

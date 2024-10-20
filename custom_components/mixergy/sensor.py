@@ -38,6 +38,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     new_entities.append(IsChargingSensor(coordinator, tank))
     new_entities.append(HolidayStartDateSensor(coordinator, tank))
     new_entities.append(HolidayEndDateSensor(coordinator, tank))
+    new_entities.append(DefaultHeatSourceSensor(coordinator, tank))
 
     async_add_entities(new_entities)
 
@@ -485,3 +486,23 @@ class HolidayEndDateSensor(SensorBase):
     @property
     def name(self):
         return f"Holiday Date End"
+    
+class DefaultHeatSourceSensor(SensorBase):
+
+    device_class = SensorDeviceClass.ENUM
+
+    def __init__(self, coordinator, tank:Tank):
+        super().__init__(coordinator,tank)
+        self._state = None
+
+    @property
+    def unique_id(self):
+        return f"mixergy_{self._tank.tank_id}_default_heat_source"
+
+    @property
+    def state(self):
+        return self._tank.default_heat_source
+
+    @property
+    def name(self):
+        return f"Default Heat Source"

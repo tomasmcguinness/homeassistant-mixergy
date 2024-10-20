@@ -16,5 +16,14 @@
                 }
             }
         }
-   }
+   },
+   "selector": {
+    "heat_source": {
+      "options": {
+        "electric": "Electric",
+        "indirect": "Indirect (e.g. gas)",
+        "heat_pump": "Heat Pump"
+      }
+    }
+  }
 }

@@ -1,4 +1,4 @@
-from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE, ATTR_START_DATE, ATTR_END_DATE, SERVICE_SET_HOLIDAY_DATES, SERVICE_CLEAR_HOLIDAY_DATES
+from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE, ATTR_START_DATE, ATTR_END_DATE, SERVICE_SET_HOLIDAY_DATES, SERVICE_CLEAR_HOLIDAY_DATES, SERVICE_SET_DEFAULT_HEAT_SOURCE, ATTR_HEAT_SOURCE
 from datetime import timedelta
 import logging
 import asyncio
@@ -55,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
     _register_services(hass)
 
     for component in PLATFORMS:
-        hass.async_create_task(hass.config_entries.async_forward_entry_setup(entry, component))
+        await hass.config_entries.async_forward_entry_setup(entry, component)
 
     return True
 
@@ -142,6 +142,21 @@ def _register_services(hass):
         if None not in results:
             _LOGGER.warning("The request to clear the holiday dates of the tank did not succeed")
 
+    async def mixergy_set_default_heat_source(call):
+
+        heat_source = call.data[ATTR_HEAT_SOURCE]
+
+        tasks = [
+            tank.set_default_heat_source(heat_source)
+            for tank in [d["tank"] for d in hass.data[DOMAIN].values()]
+            if isinstance(tank, Tank)
+        ]
+
+        results = await asyncio.gather(*tasks)
+
+        # Note that we'll get a "None" value for a successful call
+        if None not in results:
+            _LOGGER.warning("The request to set the default heat source of the tank did not succeed")
 
     if not hass.services.has_service(DOMAIN, SERVICE_SET_CHARGE):
         # Register a local handler for scene activation
@@ -189,4 +204,16 @@ def _register_services(hass):
             DOMAIN,
             SERVICE_CLEAR_HOLIDAY_DATES,
             verify_domain_control(hass, DOMAIN)(mixergy_clear_holiday_dates),
+        )
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SET_DEFAULT_HEAT_SOURCE):
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_DEFAULT_HEAT_SOURCE,
+            verify_domain_control(hass, DOMAIN)(mixergy_set_default_heat_source),
+            schema=vol.Schema(
+                {
+                    vol.Required(ATTR_HEAT_SOURCE): cv.string
+                }
+            ),
         )

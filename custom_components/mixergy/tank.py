@@ -557,7 +557,24 @@ class Tank:
             _LOGGER.error("Tried to clear holiday dates but no schedule to set")
             return
 
+        # Remove the holiday settings from the payload and send it back.
         schedule.pop("holiday", None)
+
+        await self.set_schedule(schedule)
+
+        await self.publish_updates()
+
+    async def set_default_heat_source(self, heat_source):
+
+        await self.fetch_schedule()
+
+        schedule = self._schedule
+
+        if schedule == None:
+            _LOGGER.error("Tried to set the default heat source, but failed to fetch the schedule")
+            return
+
+        schedule["defaultHeatSource"] = heat_source
 
         await self.set_schedule(schedule)
 
@@ -690,6 +707,15 @@ class Tank:
     def holiday_date_end(self) -> Optional[datetime]:
         try:
             return datetime.fromtimestamp(self._schedule["holiday"]["returnDate"] / 1000)
+        except KeyError:
+            return None
+        except TypeError:
+            return None
+        
+    @property
+    def default_heat_source(self) -> str:
+        try:
+            return self._schedule["defaultHeatSource"]
         except KeyError:
             return None
         except TypeError:
