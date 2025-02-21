@@ -8,7 +8,9 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 ## Support
 
-If you use this integration, please consider buying me a coffee or beer as way of saying thanks https://ko-fi.com/tomasmcguinness
+If you want to support this project, please consider buying me a coffee!
+
+<a href='https://ko-fi.com/G2G11TQK5' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## Installation
 
@@ -47,6 +49,7 @@ This integration offers two services:
 
 I has created a Love Lace card to give a visual representation of your Mixergy Tank.
 
+![image](https://github.com/user-attachments/assets/fb46e762-0f34-4ed8-a7e2-6a02111e6903)
 
 ### Installation
 
@@ -61,7 +64,7 @@ Enter the URL as `/local/mixergy-card.js` and select `Javascript Module` as the 
 Click `Create`. You should then be able to add the Mixergy card into your dashboards.
 
 > [!NOTE]
-> The card renders well on most modern browsers, but I have had issues with the red are not showing.
+> The card renders well on most modern browsers, but I have had issues with the red are not showing on older browsers.
 
 ## Improvements
 
