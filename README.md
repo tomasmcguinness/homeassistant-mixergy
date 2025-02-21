@@ -38,10 +38,11 @@ You then need to provide your Mixergy credentials and the serial number of your 
 
 This integration offers two services:
 
-`mixergy.mixergy_set_charge` - It allows you to provide a target charge percentage.
-`mixergy.mixergy_set_target_temperature` - It allows you to set the target temperature of the water.
-`mixergy.mixergy_set_holiday_dates` - It allows you to set the holiday start and end dates.
-`mixergy.mixergy_clear_holiday_dates` - It allows you to clear the holiday dates.
+`mixergy.mixergy_set_charge` - This boosts the hot water to the desired percentage.
+`mixergy.mixergy_set_target_temperature` - Sets the desired hot water temperature.
+`mixergy.mixergy_set_holiday_dates` - Set the holiday mode start and end dates.
+`mixergy.mixergy_clear_holiday_dates` - Clears the holiday dates, taking the tank out of holiday mode.
+`mixergy_set_default_heat_source` - Changes the tank's default heat source.
 
 ![image](https://user-images.githubusercontent.com/302741/134326151-7e1583fe-f3b7-482f-82ab-016f2f662cb6.png)
 
