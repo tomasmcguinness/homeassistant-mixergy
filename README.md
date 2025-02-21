@@ -43,6 +43,26 @@ This integration offers two services:
 
 ![image](https://user-images.githubusercontent.com/302741/134326151-7e1583fe-f3b7-482f-82ab-016f2f662cb6.png)
 
+## Lovelace Card
+
+I has created a Love Lace card to give a visual representation of your Mixergy Tank.
+
+
+### Installation
+
+To install this card, start by copying the `www/mixergy-card.js` file into your Home Assistant's `www` folder.
+
+In Home Assistant, go to Settings > Dashboards. Click on the three-dot menu, in the rop right, and choose Resources.
+
+Then click the "Add Resource" button.
+
+Enter the URL as `/local/mixergy-card.js` and select `Javascript Module` as the Resource Type.
+
+Click `Create`. You should then be able to add the Mixergy card into your dashboards.
+
+> [!NOTE]
+> The card renders well on most modern browsers, but I have had issues with the red are not showing.
+
 ## Improvements
 
 This integration is useful as it provides the state of your Mixergy tank via the API, but there are numerous enhancements I would like to make.
@@ -52,7 +72,7 @@ This integration is useful as it provides the state of your Mixergy tank via the
 * ~~Add a service to enable the charge to be set, so you can boost via HA~~
 * ~~Put better icons into the status~~
 * Ensure authentication token expiry is handled correctly. (Been told the token doesn't expire at present)
-* Create a nice Lovelace card that provides a visual representation of the tank's state.
+* ~~Create a nice Lovelace card that provides a visual representation of the tank's state.~~
 * Get this component merged into the HomeAssistant core?
 * Update the Mixergy icon and support dark mode
 * ~~Get the Mixergy icon added, to improve the installation~~
