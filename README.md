@@ -64,8 +64,11 @@ Enter the URL as `/local/mixergy-card.js` and select `Javascript Module` as the 
 
 Click `Create`. You should then be able to add the Mixergy card into your dashboards.
 
-> [!NOTE]
+> [!WARNING]
 > The card renders well on most modern browsers, but I have had issues with the red are not showing on older browsers.
+
+> [!NOTE]
+> I want to find out how to deploy this card as a HACS package to make installation easier.
 
 ## Improvements
 
@@ -77,6 +80,7 @@ This integration is useful as it provides the state of your Mixergy tank via the
 * ~~Put better icons into the status~~
 * Ensure authentication token expiry is handled correctly. (Been told the token doesn't expire at present)
 * ~~Create a nice Lovelace card that provides a visual representation of the tank's state.~~
+* Add the Card as a HACS package.
 * Get this component merged into the HomeAssistant core?
 * Update the Mixergy icon and support dark mode
 * ~~Get the Mixergy icon added, to improve the installation~~
