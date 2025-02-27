@@ -70,7 +70,7 @@ entity_current_charge: sensor.mixergy_current_charge
 ```
 
 > [!TIP]
-> You can only reference this card using YAML at this time. I want to find out how to deploy this card as a HACS package to make installation easier.
+> Watch the entity name in the snippet above. Also, you can only reference this card using YAML at this time. I want to find out how to deploy this card as a HACS package to make installation easier.
 
 ## Improvements
 
