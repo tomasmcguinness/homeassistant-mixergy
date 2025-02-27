@@ -64,11 +64,13 @@ Enter the URL as `/local/mixergy-card.js` and select `Javascript Module` as the 
 
 Click `Create`. You should then be able to add the Mixergy card into your dashboards.
 
-> [!WARNING]
-> The card renders well on most modern browsers, but I have had issues with the red are not showing on older browsers.
+```
+type: custom:mixergy-card
+entity_current_charge: sensor.mixergy_current_charge
+```
 
-> [!NOTE]
-> I want to find out how to deploy this card as a HACS package to make installation easier.
+> [!TIP]
+> You can only reference this card using YAML at this time. I want to find out how to deploy this card as a HACS package to make installation easier.
 
 ## Improvements
 
