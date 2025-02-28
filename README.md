@@ -39,6 +39,7 @@ You then need to provide your Mixergy credentials and the serial number of your 
 This integration offers two services:
 
 `mixergy.mixergy_set_charge` - This boosts the hot water to the desired percentage.
+`mixergy.mixergy_cancel_charge` - This sets the target change to 0, cancelling a boost.
 `mixergy.mixergy_set_target_temperature` - Sets the desired hot water temperature.
 `mixergy.mixergy_set_holiday_dates` - Set the holiday mode start and end dates.
 `mixergy.mixergy_clear_holiday_dates` - Clears the holiday dates, taking the tank out of holiday mode.

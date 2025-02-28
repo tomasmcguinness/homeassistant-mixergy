@@ -1,11 +1,11 @@
-from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE, ATTR_START_DATE, ATTR_END_DATE, SERVICE_SET_HOLIDAY_DATES, SERVICE_CLEAR_HOLIDAY_DATES, SERVICE_SET_DEFAULT_HEAT_SOURCE, ATTR_HEAT_SOURCE
+from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, SERVICE_CANCEL_CHARGE, ATTR_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE, ATTR_START_DATE, ATTR_END_DATE, SERVICE_SET_HOLIDAY_DATES, SERVICE_CLEAR_HOLIDAY_DATES, SERVICE_SET_DEFAULT_HEAT_SOURCE, ATTR_HEAT_SOURCE
 from datetime import timedelta
 import logging
 import asyncio
 import voluptuous as vol
 from homeassistant import core
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant,
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.service import verify_domain_control
@@ -95,6 +95,20 @@ def _register_services(hass):
         if None not in results:
             _LOGGER.warning("The request to charge the tank did not succeed")
 
+    async def mixergy_cancel_charge(call):
+
+        tasks = [
+            tank.set_target_charge(0)
+            for tank in [d["tank"] for d in hass.data[DOMAIN].values()]
+            if isinstance(tank, Tank)
+        ]
+
+        results = await asyncio.gather(*tasks)
+
+        # Note that we'll get a "None" value for a successful call
+        if None not in results:
+            _LOGGER.warning("The request to cancel the charge did not succeed")
+
     async def mixergy_set_target_temperature(call):
 
         temperature = call.data[ATTR_TEMPERATURE]
@@ -169,6 +183,14 @@ def _register_services(hass):
                     vol.Required(ATTR_CHARGE): cv.positive_int
                 }
             ),
+        )
+    
+    if not hass.services.has_service(DOMAIN, SERVICE_CANCEL_CHARGE):
+        # Register a local handler for scene activation
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_CANCEL_CHARGE,
+            verify_domain_control(hass, DOMAIN)(mixergy_cancel_charge)
         )
 
     if not hass.services.has_service(DOMAIN, SERVICE_SET_TARGET_TEMPERATURE):

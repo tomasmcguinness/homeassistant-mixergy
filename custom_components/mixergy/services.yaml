@@ -12,6 +12,9 @@ mixergy_set_charge:
         number:
           min: 0
           max: 100
+mixergy_cancel_charge:
+  name: Cancel Charge
+  description: Sets the charge of your Mixergy tank to zero, essentially cancelling a boost.
 mixergy_set_target_temperature:
   name: Set Target Temperature
   description: Sets the target temperature of the water in Mixergy tank.
