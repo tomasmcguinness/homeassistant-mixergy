@@ -43,7 +43,7 @@ class MixergyCard extends LitElement {
         let entity = this.config.entity_current_charge;
         let state = this.hass.states[entity];
         let percentage = parseFloat(state.state) / 100;
-        let height = Math.floor(300 * percentage);
+        let height = Math.floor(300 * (1 - percentage));
         return height + "px";
     }
 
@@ -86,7 +86,7 @@ class MixergyCard extends LitElement {
       }
  
       .tank {
-        background-color: #039be5;
+        background-color: #ff0000;
         height: 300px;
         width: 120px;
         border-radius: 5px;
@@ -96,7 +96,7 @@ class MixergyCard extends LitElement {
  
       .hot-water {
         align-self: flex-end;
-        background-color: red;
+        background-color: #00008b;
         width: 120px;
         border-radius: 5px;
         align-items: center;
