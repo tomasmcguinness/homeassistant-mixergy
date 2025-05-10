@@ -1,4 +1,5 @@
 import logging
+import aiohttp
 import asyncio
 import json
 import stomp
@@ -7,10 +8,12 @@ from typing import Optional
 from homeassistant.core import callback
 from homeassistant.helpers import aiohttp_client
 from .const import ATTR_CHARGE
+from stomp.adapter.ws import websocket
 
 _LOGGER = logging.getLogger(__name__)
 
 ROOT_ENDPOINT = "https://www.mixergy.io/api/v2"
+REQUEST_TIMEOUT = 60
 STOMP_ENDPOINT = "www.mixergy.io"
 STOMP_WS_PATH = "/api/v1/stomp"
 STOMP_RETRY_TIMER = 15
@@ -25,6 +28,7 @@ class Tank:
 
     def __init__(self, hass, username, password, serial_number):
         self._hass = hass
+        self._session = aiohttp_client.async_get_clientsession(hass, verify_ssl=False)
 
         # Internal data
         self._callbacks = set()
@@ -93,89 +97,51 @@ class Tank:
 
     async def test_connection(self):
         return await self._fetch_tank_information()
-    
-    async def set_target_charge(self, charge):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+    async def _tank_request_put(self, url, json):
 
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.put(self._control_url, headers=headers, json={'charge': charge }) as resp:
+        try:
+            async with asyncio.timeout(REQUEST_TIMEOUT), self._session.put(url, headers=headers, json=json) as resp:
+                if resp.status != 200:
+                    _LOGGER.error("Call to %s failed with status %i", url, resp.status)
+                    return False
 
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set the desired charge failed with status %i", self._control_url, resp.status)
-                return
+                return True
 
+        except TimeoutError:
+            _LOGGER.debug("Timeout calling %s", url)
+            return False
+    
+    async def set_target_charge(self, charge):
+
+        if await self._tank_request_put(self._control_url, {'charge': charge}):
             await self._fetch_last_measurement()
 
     async def set_target_temperature(self, temperature):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'max_temp': temperature }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set the target temperature failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'max_temp': temperature}):
             await self._fetch_settings()
 
     async def set_target_temperature_control_enabled(self, enabled):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'target_temperature_control_enabled': enabled }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set maintain target temperature enabled failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'target_temperature_control_enabled': enabled}):
             await self._fetch_settings()
 
     async def set_dsr_enabled(self, enabled):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'dsr_enabled': enabled }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set dsr (grid assistance) enabled failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'dsr_enabled': enabled}):
             await self._fetch_settings()
 
     async def set_frost_protection_enabled(self, enabled):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'frost_protection_enabled': enabled }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set frost protection enabled failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'frost_protection_enabled': enabled}):
             await self._fetch_settings()
 
     async def set_distributed_computing_enabled(self, enabled):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'distributed_computing_enabled': enabled }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set distributed computing (medical research) enabled failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'distributed_computing_enabled': enabled}):
             await self._fetch_settings()
 
     async def set_cleansing_temperature(self, value):
@@ -184,30 +150,12 @@ class Tank:
         value = min(value, 55)
         value = max(value, 51)
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'cleansing_temperature': value }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set cleansing temperature failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'cleansing_temperature': value}):
             await self._fetch_settings()
 
     async def set_divert_exported_enabled(self, enabled):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'divert_exported_enabled': enabled }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set divert export enabled failed with status %i", self._settings_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'divert_exported_enabled': enabled}):
             await self._fetch_settings()
 
     async def set_pv_cut_in_threshold(self, value):
@@ -216,16 +164,7 @@ class Tank:
         value = min(value, 500)
         value = max(value, 0)
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'pv_cut_in_threshold': value }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set PV cut in threshold failed with status %i", self._control_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'pv_cut_in_threshold': value}):
             await self._fetch_settings()
 
     async def set_pv_charge_limit(self, value):
@@ -234,16 +173,7 @@ class Tank:
         value = min(value, 100)
         value = max(value, 0)
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'pv_charge_limit': value }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set PV charge limit failed with status %i", self._control_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'pv_charge_limit': value}):
             await self._fetch_settings()
 
     async def set_pv_target_current(self, value):
@@ -252,16 +182,7 @@ class Tank:
         value = min(value, 0)
         value = max(value, -1)
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'pv_target_current': value }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set PV target current failed with status %i", self._control_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'pv_target_current': value}):
             await self._fetch_settings()
 
     async def set_pv_over_temperature(self, value):
@@ -270,16 +191,7 @@ class Tank:
         value = min(value, 60)
         value = max(value, 45)
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._settings_url, headers=headers, json={'pv_over_temperature': value }) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set PV over temperature failed with status %i", self._control_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._settings_url, {'pv_over_temperature': value}):
             await self._fetch_settings()
 
     @callback
@@ -304,7 +216,9 @@ class Tank:
             await self.fetch_data()
 
             host_tuples = [(STOMP_ENDPOINT, 443)]
+            _LOGGER.debug("STOMP creating connection")
             stomp_conn = stomp.WSConnection(host_tuples, ws_path=STOMP_WS_PATH)
+            _LOGGER.debug("STOMP connection setting SSL")
             stomp_conn.set_ssl(host_tuples)
 
             class StompListener(stomp.listener.ConnectionListener):
@@ -345,11 +259,26 @@ class Tank:
                     self._tank._hass.loop.create_task(self._tank._publish_updates())
 
             listener = StompListener(self)
+            _LOGGER.debug("STOMP connection setting listener")
             stomp_conn.set_listener("listener", listener)
 
             try:
                 headers = {'Token': self._token}
+
+                # We do this dance setting the default timeout to 15, then connecting, then setting
+                # the timeout on the underlying socket to `None` because there is no other way to
+                # ensure that the call to `connect` doesn't block forever if the connection cannot
+                # be made. The dance here will ensure that the call to `connect` times-out if it
+                # takes longer than 15 seconds, but then the socket is set to never timeout so that
+                # it stays connected forever.
+                _LOGGER.debug("STOMP connecting socket")
+                websocket_default_timeout = websocket.getdefaulttimeout()
+                websocket.setdefaulttimeout(15)
                 stomp_conn.connect(headers=headers, with_connect_command=True)
+                stomp_conn.transport.socket.timeout = None
+                websocket.setdefaulttimeout(websocket_default_timeout)
+
+                _LOGGER.debug("STOMP waiting for transport connection")
                 stomp_conn.transport.wait_for_connection(timeout=60)
                 _LOGGER.debug("STOMP connected")
 
@@ -388,55 +317,59 @@ class Tank:
             _LOGGER.info("Authentication token is valid")
             return True
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+        try:
+            async with asyncio.timeout(REQUEST_TIMEOUT):
 
-        async with session.get(ROOT_ENDPOINT) as resp:
+                async with self._session.get(ROOT_ENDPOINT) as resp:
 
-            if resp.status != 200:
-                _LOGGER.error("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
-                return False
+                    if resp.status != 200:
+                        _LOGGER.error("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
+                        return False
 
-            root_result = await resp.json()
+                    root_result = await resp.json()
 
-            self._account_url = root_result["_links"]["account"]["href"]
+                    self._account_url = root_result["_links"]["account"]["href"]
 
-            _LOGGER.info("Account URL: %s", self._account_url)
+                    _LOGGER.info("Account URL: %s", self._account_url)
 
-            async with session.get(self._account_url) as resp:
+                    async with self._session.get(self._account_url) as resp:
 
-                if resp.status != 200:
-                    _LOGGER.error("Fetch of account at %s failed with status code %i", self._account_url, resp.status)
-                    return False
+                        if resp.status != 200:
+                            _LOGGER.error("Fetch of account at %s failed with status code %i", self._account_url, resp.status)
+                            return False
 
-                account_result = await resp.json()
+                        account_result = await resp.json()
 
-                self._login_url = account_result["_links"]["login"]["href"]
+                        self._login_url = account_result["_links"]["login"]["href"]
 
-                _LOGGER.info("Login URL: %s", self._login_url)
+                        _LOGGER.info("Login URL: %s", self._login_url)
 
-        async with session.post(self._login_url, json={'username': self.username, 'password': self.password}) as resp:
+                async with self._session.post(self._login_url, json={'username': self.username, 'password': self.password}) as resp:
 
-            if resp.status != 201:
-                _LOGGER.error("Authentication failed with status code %i", resp.status)
-                return False
+                    if resp.status != 201:
+                        _LOGGER.error("Authentication failed with status code %i", resp.status)
+                        return False
 
-            login_result = await resp.json()
-            token = login_result['token']
-            self._token = token
+                    login_result = await resp.json()
+                    token = login_result['token']
+                    self._token = token
 
-            return True
+                    return True
+
+        except TimeoutError:
+            _LOGGER.debug("Timeout while authenticating")
 
     async def _fetch_tank_information(self):
+
+        _LOGGER.debug("Fetching tank information")
 
         if self._latest_measurement_url:
             _LOGGER.info("Tank information has already been fetched")
             return
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.get(ROOT_ENDPOINT, headers=headers) as resp:
+        async with asyncio.timeout(REQUEST_TIMEOUT), self._session.get(ROOT_ENDPOINT, headers=headers) as resp:
 
             if resp.status != 200:
                 _LOGGER.error("Fetch of root at %s failed with status code %i", ROOT_ENDPOINT, resp.status)
@@ -446,7 +379,7 @@ class Tank:
 
             self._tanks_url = root_result["_links"]["tanks"]["href"]
 
-        async with session.get(self._tanks_url, headers=headers) as resp:
+        async with asyncio.timeout(REQUEST_TIMEOUT), self._session.get(self._tanks_url, headers=headers) as resp:
 
             if resp.status != 200:
                 _LOGGER.error("Fetch of tanks at %s failed with status code %i", self._tanks_url, resp.status)
@@ -472,7 +405,7 @@ class Tank:
 
             tank_url = tank["_links"]["self"]["href"]
 
-            async with session.get(tank_url, headers=headers) as resp:
+            async with self._session.get(tank_url, headers=headers) as resp:
 
                 if resp.status != 200:
                     _LOGGER.error("Fetch of the tanks details at %s failed with status %i", tank_url, resp.status)
@@ -504,21 +437,30 @@ class Tank:
 
     async def _fetch_last_measurement(self, publish = False):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+        _LOGGER.debug("Fetching last measurement")
 
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.get(self._latest_measurement_url, headers=headers) as resp:
+        try:
+            async with asyncio.timeout(REQUEST_TIMEOUT), self._session.get(self._latest_measurement_url, headers=headers, timeout=REQUEST_TIMEOUT) as resp:
 
-            if resp.status != 200:
-                _LOGGER.info("Fetch of the latest measurement at %s failed with status %i", self._latest_measurement_url, resp.status)
-                return
+                if resp.status != 200:
+                    _LOGGER.info("Fetch of the latest measurement at %s failed with status %i", self._latest_measurement_url, resp.status)
+                    return
 
-            tank_result = await resp.json()
-            self._update_from_latest_measurement(tank_result)
+                _LOGGER.debug(f"Fetching last measurement response:\n{resp.status}\n{resp}")
 
-            if publish:
-                await self._publish_updates
+                tank_result = await resp.json()
+                self._update_from_latest_measurement(tank_result)
+
+                if publish:
+                    await self._publish_updates()
+
+        except TimeoutError:
+            _LOGGER.debug("Timeout fetching last measurement")
+        
+        except Exception as e:
+            _LOGGER.debug(f"Unhandled exception:\n{e}\n{e.with_traceback()}")
 
     def _update_from_latest_measurement(self, tank_result):
 
@@ -616,24 +558,28 @@ class Tank:
 
     async def _fetch_settings(self, publish = False):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+        _LOGGER.debug("Fetching settings")
 
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.get(self._settings_url, headers=headers) as resp:
+        try:
+            async with asyncio.timeout(REQUEST_TIMEOUT), self._session.get(self._settings_url, headers=headers) as resp:
 
-            if resp.status != 200:
-                _LOGGER.info("Fetch of the settings %s failed with status %i", self._settings_url, resp.status)
-                return
+                if resp.status != 200:
+                    _LOGGER.info("Fetch of the settings %s failed with status %i", self._settings_url, resp.status)
+                    return
 
-            # The settings API returns text/plain as the content-type, so using the resp.json() fails.
-            # Load it as a bit of JSON via the text.
-            response_text = await resp.text()
-            json_object = json.loads(response_text)
-            self._update_from_new_settings(json_object)
+                # The settings API returns text/plain as the content-type, so using the resp.json() fails.
+                # Load it as a bit of JSON via the text.
+                response_text = await resp.text()
+                json_object = json.loads(response_text)
+                self._update_from_new_settings(json_object)
 
-            if publish:
-                await self._publish_updates
+                if publish:
+                    await self._publish_updates()
+
+        except TimeoutError:
+            _LOGGER.debug("Timeout fetching settings")
 
     def _update_from_new_settings(self, json_object):
 
@@ -658,24 +604,28 @@ class Tank:
 
     async def _fetch_schedule(self, publish = False):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
+        _LOGGER.debug("Fetching schedule")
 
         headers = {'Authorization': f'Bearer {self._token}'}
 
-        async with session.get(self._schedule_url, headers=headers) as resp:
+        try:
+            async with asyncio.timeout(REQUEST_TIMEOUT), self._session.get(self._schedule_url, headers=headers) as resp:
 
-            if resp.status != 200:
-                _LOGGER.info("Fetch of the schedule %s failed with status %i", self._schedule_url, resp.status)
-                return
+                if resp.status != 200:
+                    _LOGGER.info("Fetch of the schedule %s failed with status %i", self._schedule_url, resp.status)
+                    return
 
-            # The schedule API returns text/plain as the content-type, so using the resp.json() fails.
-            # Load it as a bit of JSON via the text.
-            response_text = await resp.text()
-            json_object = json.loads(response_text)
-            self._update_from_new_schedule(json_object)
+                # The schedule API returns text/plain as the content-type, so using the resp.json() fails.
+                # Load it as a bit of JSON via the text.
+                response_text = await resp.text()
+                json_object = json.loads(response_text)
+                self._update_from_new_schedule(json_object)
 
-            if publish:
-                await self._publish_updates
+                if publish:
+                    await self._publish_updates()
+
+        except TimeoutError:
+            _LOGGER.debug("Timeout fetching schedule")
 
     def _update_from_new_schedule(self, json_object):
 
@@ -686,16 +636,7 @@ class Tank:
 
     async def set_schedule(self, value):
 
-        session = aiohttp_client.async_get_clientsession(self._hass, verify_ssl=False)
-
-        headers = {'Authorization': f'Bearer {self._token}'}
-
-        async with session.put(self._schedule_url, headers=headers, json=value) as resp:
-
-            if resp.status != 200:
-                _LOGGER.error("Call to %s to set schedule failed with status %i", self._schedule_url, resp.status)
-                return
-
+        if await self._tank_request_put(self._schedule_url, value):
             await self._fetch_schedule()
 
     async def set_holiday_dates(self, start_date: datetime, end_date: datetime):
