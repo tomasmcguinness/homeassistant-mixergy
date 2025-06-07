@@ -8,7 +8,9 @@ Add support for Mixergy's smart water tank into Home Assistant. This integration
 
 ## Support
 
-If you use this integration, please consider buying me a coffee or beer as way of saying thanks https://ko-fi.com/tomasmcguinness
+If you want to support this project, please consider buying me a coffee!
+
+<a href='https://ko-fi.com/G2G11TQK5' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://cdn.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 ## Installation
 
@@ -36,12 +38,39 @@ You then need to provide your Mixergy credentials and the serial number of your 
 
 This integration offers two services:
 
-`mixergy.mixergy_set_charge` - It allows you to provide a target charge percentage.
-`mixergy.mixergy_set_target_temperature` - It allows you to set the target temperature of the water.
-`mixergy.mixergy_set_holiday_dates` - It allows you to set the holiday start and end dates.
-`mixergy.mixergy_clear_holiday_dates` - It allows you to clear the holiday dates.
+`mixergy.mixergy_set_charge` - This boosts the hot water to the desired percentage.
+`mixergy.mixergy_set_target_temperature` - Sets the desired hot water temperature.
+`mixergy.mixergy_set_holiday_dates` - Set the holiday mode start and end dates.
+`mixergy.mixergy_clear_holiday_dates` - Clears the holiday dates, taking the tank out of holiday mode.
+`mixergy_set_default_heat_source` - Changes the tank's default heat source.
 
 ![image](https://user-images.githubusercontent.com/302741/134326151-7e1583fe-f3b7-482f-82ab-016f2f662cb6.png)
+
+## Lovelace Card
+
+I has created a Love Lace card to give a visual representation of your Mixergy Tank.
+
+![image](https://github.com/user-attachments/assets/fb46e762-0f34-4ed8-a7e2-6a02111e6903)
+
+### Installation
+
+To install this card, start by copying the `www/mixergy-card.js` file into your Home Assistant's `www` folder.
+
+In Home Assistant, go to Settings > Dashboards. Click on the three-dot menu, in the rop right, and choose Resources.
+
+Then click the "Add Resource" button.
+
+Enter the URL as `/local/mixergy-card.js` and select `Javascript Module` as the Resource Type.
+
+Click `Create`. You should then be able to add the Mixergy card into your dashboards.
+
+```
+type: custom:mixergy-card
+entity_current_charge: sensor.mixergy_current_charge
+```
+
+> [!TIP]
+> Watch the entity name in the snippet above. Also, you can only reference this card using YAML at this time. I want to find out how to deploy this card as a HACS package to make installation easier.
 
 ## Improvements
 
@@ -52,7 +81,8 @@ This integration is useful as it provides the state of your Mixergy tank via the
 * ~~Add a service to enable the charge to be set, so you can boost via HA~~
 * ~~Put better icons into the status~~
 * Ensure authentication token expiry is handled correctly. (Been told the token doesn't expire at present)
-* Create a nice Lovelace card that provides a visual representation of the tank's state.
+* ~~Create a nice Lovelace card that provides a visual representation of the tank's state.~~
+* Add the Card as a HACS package.
 * Get this component merged into the HomeAssistant core?
 * Update the Mixergy icon and support dark mode
 * ~~Get the Mixergy icon added, to improve the installation~~
