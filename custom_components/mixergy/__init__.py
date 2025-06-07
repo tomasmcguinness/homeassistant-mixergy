@@ -4,13 +4,13 @@ import logging
 import asyncio
 import voluptuous as vol
 from homeassistant import core
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
+from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.config_validation import make_entity_service_schema
 from homeassistant.helpers.service import verify_domain_control
 from .tank import Tank
-from typing import Any, Final, final
+from typing import Final, final
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -19,11 +19,8 @@ CHARGE_SERVICE_SCHEMA: Final = make_entity_service_schema(
 )
 
 DOMAIN = "mixergy"
-PLATFORMS = [
-    "sensor",
-    "switch",
-    "number",
-]
+PLATFORMS:list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
+
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass: HomeAssistant, config):
@@ -54,8 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
 
     _register_services(hass)
 
-    for component in PLATFORMS:
-        await hass.config_entries.async_forward_entry_setup(entry, component)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
