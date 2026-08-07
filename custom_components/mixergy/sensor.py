@@ -21,6 +21,8 @@ _INTEGRATION_SENSOR_KWARGS = (
     else {}
 )
 
+_INTEGRATION_SENSOR_ACCEPTS_HASS = "hass" in inspect.signature(IntegrationSensor.__init__).parameters
+
 async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.info("Setting up entry based on user config")
 
@@ -347,18 +349,25 @@ class PowerSensor(SensorBase):
 class EnergySensor(IntegrationSensor):
 
     def __init__(self, hass: HomeAssistant, tank:Tank):
-        super().__init__(
-            #hass = hass,
-            name="Mixergy Electric Heat Energy",
-            source_entity="sensor.mixergy_electric_heat_power",
-            round_digits=2,
-            unit_prefix="k",
-            unit_time="h",
-            integration_method="left",
-            unique_id=f"mixergy_{tank.tank_id}_energy",
-            max_sub_interval=None,
+        integration_kwargs = {
+            "name":"Mixergy Electric Heat Energy",
+            "source_entity":"sensor.mixergy_electric_heat_power",
+            "round_digits":2,
+            "unit_prefix":"k",
+            "unit_time":"h",
+            "integration_method":"left",
+            "unique_id":f"mixergy_{tank.tank_id}_energy",
+            "max_sub_interval":None,
             **_INTEGRATION_SENSOR_KWARGS,
-        )
+        }
+        # HA 2026.8 removed the hass parameter from IntegrationSensor.__init__
+        # (home-assistant/core#177596). Pass it only when the installed
+        # IntegrationSensor still accepts it, so both pre- and post-2026.8
+        # keep working.
+        if _INTEGRATION_SENSOR_ACCEPTS_HASS:
+            integration_kwargs["hass"] = hass
+
+        super().__init__(**integration_kwargs)
 
     @property
     def icon(self):
@@ -396,18 +405,25 @@ class PVPowerSensor(SensorBase):
 class PVEnergySensor(IntegrationSensor):
 
     def __init__(self, hass: HomeAssistant, tank:Tank):
-        super().__init__(
-            #hass = hass,
-            name="Mixergy Electric PV Energy",
-            source_entity="sensor.mixergy_electric_pv_power",
-            round_digits=2,
-            unit_prefix=None, # PVPowerSensor is already in kW
-            unit_time="h",
-            integration_method="left",
-            unique_id=f"mixergy_{tank.tank_id}_pv_energy",
-            max_sub_interval=None,
+        integration_kwargs = {
+            "name":"Mixergy Electric PV Energy",
+            "source_entity":"sensor.mixergy_electric_pv_power",
+            "round_digits":2,
+            "unit_prefix":None, # PVPowerSensor is already in kW
+            "unit_time":"h",
+            "integration_method":"left",
+            "unique_id":f"mixergy_{tank.tank_id}_pv_energy",
+            "max_sub_interval":None,
             **_INTEGRATION_SENSOR_KWARGS,
-        )
+        }
+        # HA 2026.8 removed the hass parameter from IntegrationSensor.__init__
+        # (home-assistant/core#177596). Pass it only when the installed
+        # IntegrationSensor still accepts it, so both pre- and post-2026.8
+        # keep working.
+        if _INTEGRATION_SENSOR_ACCEPTS_HASS:
+            integration_kwargs["hass"] = hass
+
+        super().__init__(**integration_kwargs)
         self._tank = tank
 
     @property
