@@ -1,13 +1,13 @@
 from .const import DOMAIN
 from .tank import Tank
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.helpers.entity import Entity
 
-class MixergyEntityBase(CoordinatorEntity):
+class MixergyEntityBase(Entity):
 
-    should_poll = True
+    should_poll = False
 
-    def __init__(self, coordinator, tank:Tank):
-        super().__init__(coordinator)        
+    def __init__(self, tank:Tank):
+        super().__init__()
         self._tank = tank
 
     @property
@@ -17,8 +17,8 @@ class MixergyEntityBase(CoordinatorEntity):
             "manufacturer": "Mixergy Ltd",
             "name": "Mixergy Tank",
             "suggested_area": "garage",
-            "model": self._tank.modelCode,
-            "sw_version": self._tank.firmwareVersion
+            "model": self._tank.model_code,
+            "sw_version": self._tank.firmware_version
         }
 
     @property
