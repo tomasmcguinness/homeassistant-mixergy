@@ -26,6 +26,7 @@ class MixergyEntityBase(CoordinatorEntity):
         return self._tank.online
 
     async def async_added_to_hass(self):
+        await super().async_added_to_hass()
         self._tank.register_callback(self.async_write_ha_state)
 
     async def async_will_remove_from_hass(self):
