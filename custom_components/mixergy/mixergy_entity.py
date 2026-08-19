@@ -4,7 +4,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 class MixergyEntityBase(CoordinatorEntity):
 
-    should_poll = True
+    should_poll = False
 
     def __init__(self, coordinator, tank:Tank):
         super().__init__(coordinator)        
