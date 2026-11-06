@@ -62,11 +62,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Hello World."""
 
     VERSION = 1
-    # Pick one of the available connection classes in homeassistant/config_entries.py
-    # This tells HA if it should be asking for updates, or it'll be notified of updates
-    # automatically. This example uses PUSH, as the dummy hub will notify HA of
-    # changes.
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_PUSH
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
