@@ -3,7 +3,6 @@ from datetime import timedelta
 import logging
 import asyncio
 import voluptuous as vol
-from homeassistant import config_validation as cv
 from homeassistant import core
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
