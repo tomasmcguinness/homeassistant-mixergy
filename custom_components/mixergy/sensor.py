@@ -1,3 +1,4 @@
+import inspect
 import logging
 from datetime import timedelta
 from homeassistant.const import UnitOfPower, UnitOfTemperature, PERCENTAGE, STATE_OFF
@@ -10,6 +11,15 @@ from .tank import Tank
 from .mixergy_entity import MixergyEntityBase
 
 _LOGGER = logging.getLogger(__name__)
+
+# HA 2026.11 made device_class a required keyword argument of IntegrationSensor;
+# None keeps the previous behaviour of deriving it from the source sensor
+# (power -> energy). Older HA versions don't accept the argument.
+_INTEGRATION_SENSOR_KWARGS = (
+    {"device_class": None}
+    if "device_class" in inspect.signature(IntegrationSensor.__init__).parameters
+    else {}
+)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     _LOGGER.info("Setting up entry based on user config")
@@ -346,7 +356,8 @@ class EnergySensor(IntegrationSensor):
             unit_time="h",
             integration_method="left",
             unique_id=f"mixergy_{tank.tank_id}_energy",
-            max_sub_interval=None
+            max_sub_interval=None,
+            **_INTEGRATION_SENSOR_KWARGS,
         )
 
     @property
@@ -394,7 +405,8 @@ class PVEnergySensor(IntegrationSensor):
             unit_time="h",
             integration_method="left",
             unique_id=f"mixergy_{tank.tank_id}_pv_energy",
-            max_sub_interval=None
+            max_sub_interval=None,
+            **_INTEGRATION_SENSOR_KWARGS,
         )
         self._tank = tank
 
