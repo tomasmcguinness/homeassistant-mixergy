@@ -8,6 +8,7 @@ on:
   
 jobs:
   validate:
+    if: ${{ github.repository_owner == 'tomasmcguinness' }}
     name: Validate
     runs-on: "ubuntu-latest"
     steps:
