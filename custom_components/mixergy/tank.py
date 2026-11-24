@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from typing import Optional
 from homeassistant.helpers import aiohttp_client
+from homeassistant.util import dt as dt_util
 from .const import ATTR_CHARGE
 
 _LOGGER = logging.getLogger(__name__)
@@ -539,8 +540,9 @@ class Tank:
             return
 
         schedule["holiday"] = {
-            "departDate": int(start_date.timestamp()) * 1000,
-            "returnDate": int(end_date.timestamp()) * 1000
+            # Naive datetimes are in HA's configured time zone, not the OS's
+            "departDate": int(dt_util.as_local(start_date).timestamp()) * 1000,
+            "returnDate": int(dt_util.as_local(end_date).timestamp()) * 1000
         }
 
         await self.set_schedule(schedule)
@@ -697,7 +699,7 @@ class Tank:
     @property
     def holiday_date_start(self) -> Optional[datetime]:
         try:
-            return datetime.fromtimestamp(self._schedule["holiday"]["departDate"] / 1000)
+            return dt_util.utc_from_timestamp(self._schedule["holiday"]["departDate"] / 1000)
         except KeyError:
             return None
         except TypeError:
@@ -706,7 +708,7 @@ class Tank:
     @property
     def holiday_date_end(self) -> Optional[datetime]:
         try:
-            return datetime.fromtimestamp(self._schedule["holiday"]["returnDate"] / 1000)
+            return dt_util.utc_from_timestamp(self._schedule["holiday"]["returnDate"] / 1000)
         except KeyError:
             return None
         except TypeError:
