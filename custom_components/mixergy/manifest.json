@@ -3,7 +3,7 @@
     "name": "Mixergy",
     "codeowners": ["@tomasmcguinness"],
     "config_flow": true,
-    "dependencies": ["integration"],
+    "dependencies": ["integration", "frontend", "http", "lovelace"],
     "documentation": "https://github.com/tomasmcguinness/homeassistant-mixergy",
     "integration_type": "device",
     "iot_class": "cloud_polling",

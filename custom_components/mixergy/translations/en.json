@@ -17,6 +17,14 @@
             }
         }
    },
+   "config_panel": {
+    "card": {
+      "description": "Displays the current charge of a Mixergy tank.",
+      "entity_not_found": "Entity not found: {entity}. Set entity_current_charge to your charge sensor.",
+      "entity_unavailable": "Charge sensor {entity} is unavailable ({state}).",
+      "empty_entity": "entity_current_charge must not be empty; set it to your current charge sensor's entity ID"
+    }
+  },
    "selector": {
     "heat_source": {
       "options": {

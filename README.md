@@ -48,29 +48,34 @@ This integration offers two services:
 
 ## Lovelace Card
 
-I has created a Love Lace card to give a visual representation of your Mixergy Tank.
+The repository includes a Lovelace dashboard card that displays the current charge of your Mixergy tank.
 
 ![image](https://github.com/user-attachments/assets/fb46e762-0f34-4ed8-a7e2-6a02111e6903)
 
 ### Installation
 
-To install this card, start by copying the `www/mixergy-card.js` file into your Home Assistant's `www` folder.
+The card is included with the Mixergy integration. In Lovelace storage mode, installing the integration through HACS serves and registers the card automatically. Restart Home Assistant after installing or updating the integration.
 
-In Home Assistant, go to Settings > Dashboards. Click on the three-dot menu, in the rop right, and choose Resources.
+Search for **Mixergy** in the card picker, or select `sensor.current_charge` to see the card under community suggestions. Entity suggestions require Home Assistant 2026.6 or later and match only that entity ID.
 
-Then click the "Add Resource" button.
-
-Enter the URL as `/local/mixergy-card.js` and select `Javascript Module` as the Resource Type.
-
-Click `Create`. You should then be able to add the Mixergy card into your dashboards.
-
-```
+```yaml
 type: custom:mixergy-card
-entity_current_charge: sensor.mixergy_current_charge
 ```
 
 > [!TIP]
-> Watch the entity name in the snippet above. Also, you can only reference this card using YAML at this time. I want to find out how to deploy this card as a HACS package to make installation easier.
+> The card defaults to `sensor.current_charge`. If the card says the entity was not found, look up your tank's Current Charge entity ID under Settings > Devices & services > Entities and set `entity_current_charge` in the card's YAML configuration.
+
+If Lovelace resources are YAML-managed, add the module to the existing `lovelace.resources` list:
+
+```yaml
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /mixergy/mixergy-card.js
+      type: module
+```
+
+For a manual integration installation, copy the full `custom_components/mixergy` directory, including its `www` folder.
 
 ## Improvements
 
@@ -82,7 +87,7 @@ This integration is useful as it provides the state of your Mixergy tank via the
 * ~~Put better icons into the status~~
 * Ensure authentication token expiry is handled correctly. (Been told the token doesn't expire at present)
 * ~~Create a nice Lovelace card that provides a visual representation of the tank's state.~~
-* Add the Card as a HACS package.
+* ~~Add the Card as a HACS package.~~
 * Get this component merged into the HomeAssistant core?
 * Update the Mixergy icon and support dark mode
 * ~~Get the Mixergy icon added, to improve the installation~~
