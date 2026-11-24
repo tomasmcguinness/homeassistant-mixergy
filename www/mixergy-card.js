@@ -119,4 +119,3 @@ class MixergyCard extends LitElement {
     }
 }
 customElements.define("mixergy-card", MixergyCard);
-Advertisement
