@@ -2,7 +2,10 @@ from .const import ATTR_CHARGE, SERVICE_SET_CHARGE, ATTR_TEMPERATURE, SERVICE_SE
 from datetime import timedelta
 import logging
 import asyncio
+from pathlib import Path
 import voluptuous as vol
+from homeassistant.components.http import StaticPathConfig
+from homeassistant.components.lovelace import LOVELACE_DATA, MODE_STORAGE
 from homeassistant import core
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
 from homeassistant.core import HomeAssistant
@@ -22,6 +25,8 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema("mixergy")
 
 DOMAIN = "mixergy"
 PLATFORMS:list[Platform] = [Platform.SENSOR, Platform.SWITCH, Platform.NUMBER]
+CARD_URL = "/mixergy/mixergy-card.js"
+CARD_PATH = Path(__file__).parent / "www" / "mixergy-card.js"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +35,48 @@ async def async_setup(hass: HomeAssistant, config):
 
     hass.data[DOMAIN] = {}
 
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(CARD_URL, str(CARD_PATH), cache_headers=False),
+            StaticPathConfig(
+                "/mixergy/translations",
+                str(Path(__file__).parent / "translations"),
+                cache_headers=False,
+            ),
+        ]
+    )
+    await _async_register_lovelace_card(hass)
+
     return True
+
+async def _async_register_lovelace_card(hass: HomeAssistant) -> None:
+    """Register the Mixergy card as a Lovelace resource."""
+    lovelace_data = hass.data.get(LOVELACE_DATA)
+    if lovelace_data is None:
+        _LOGGER.warning("Lovelace is unavailable; the Mixergy card was not registered")
+        return
+
+    resources = lovelace_data.resources
+    if lovelace_data.resource_mode != MODE_STORAGE:
+        if not any(
+            resource["url"].split("?", maxsplit=1)[0] == CARD_URL
+            for resource in resources.async_items()
+        ):
+            _LOGGER.warning(
+                "Lovelace resources are YAML-managed; add %s as a module resource",
+                CARD_URL,
+            )
+        return
+
+    if not resources.loaded:
+        await resources.async_load()
+        resources.loaded = True
+
+    if not any(
+        resource["url"].split("?", maxsplit=1)[0] == CARD_URL
+        for resource in resources.async_items()
+    ):
+        await resources.async_create_item({"res_type": "module", "url": CARD_URL})
 
 async def async_setup_entry(hass: HomeAssistant, entry:ConfigEntry) -> bool:
 
