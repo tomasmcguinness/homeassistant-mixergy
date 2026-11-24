@@ -482,7 +482,7 @@ class HolidayStartDateSensor(SensorBase):
         return f"mixergy_{self._tank.tank_id}_holiday_date_start"
 
     @property
-    def state(self):
+    def native_value(self):
         return self._tank.holiday_date_start
 
     @property
@@ -502,7 +502,7 @@ class HolidayEndDateSensor(SensorBase):
         return f"mixergy_{self._tank.tank_id}_holiday_date_end"
 
     @property
-    def state(self):
+    def native_value(self):
         return self._tank.holiday_date_end
 
     @property
