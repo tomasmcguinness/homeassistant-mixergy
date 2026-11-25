@@ -18,9 +18,9 @@ class MixergyCard extends LitElement {
         return html`
       <ha-card header="Mixergy">
       <div class="content">
-          <div class="tank">
+          <div class="tank" style="background-color: ${this.getTankColour()}">
         ${html`
-        <div class="hot-water" style="height: ${this.getHeight()}">
+        <div class="hot-water" style="height: ${this.getHeight()} ; background-color: ${this.getHotWaterColour()}">
         </div>
         <div class="hot-water-percentage">
           ${this.getPercentage()}
@@ -30,6 +30,22 @@ class MixergyCard extends LitElement {
         </div>
       </ha-card>
     `;
+    }
+
+    getTankColour() {
+        if (this.config.hotwater_floats) {
+            return "#ff0000";
+        } else {
+            return "#00008b";
+        } 
+    }
+
+    getHotWaterColour() {
+        if (this.config.hotwater_floats) {
+            return "#00008b";
+        } else {
+            return "#ff0000";
+        } 
     }
 
     getPercentage() {
@@ -43,7 +59,10 @@ class MixergyCard extends LitElement {
         let entity = this.config.entity_current_charge;
         let state = this.hass.states[entity];
         let percentage = parseFloat(state.state) / 100;
-        let height = Math.floor(300 * percentage);
+        if (this.config.hotwater_floats) {
+            percentage = 1 - percentage;
+        }
+        let height = Math.floor(300 * (percentage));
         return height + "px";
     }
 
@@ -86,7 +105,6 @@ class MixergyCard extends LitElement {
       }
  
       .tank {
-        background-color: #039be5;
         height: 300px;
         width: 120px;
         border-radius: 5px;
@@ -96,7 +114,6 @@ class MixergyCard extends LitElement {
  
       .hot-water {
         align-self: flex-end;
-        background-color: red;
         width: 120px;
         border-radius: 5px;
         align-items: center;
